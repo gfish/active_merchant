@@ -1,8 +1,8 @@
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class PensioGateway < Gateway
-      TEST_MERCHANT_URL = 'https://testgateway.pensio.com/merchant/'
-      LIVE_MERCHANT_URL = 'https://gateway.pensio.com/merchant/'
+      MERCHANT_TEST_URL = 'https://testgateway.pensio.com/merchant/'
+      MERCHANT_LIVE_URL = 'https://gateway.pensio.com/merchant/'
       
       # The countries the gateway supports merchants from as 2 digit ISO country codes
       self.default_currency = 'DKK'
@@ -60,6 +60,8 @@ module ActiveMerchant #:nodoc:
       def initialize(options = {})
         #requires!(options, :login, :password)
         @options = options
+        ECOMMERCE_TEST_URL = 'http://testgateway.pensio.com/eCommerce/API/form/'
+        ECOMMERCE_LIVE_URL = "http://#{options[:subdomain]}.pensio.com/eCommerce/API/form/"
         super
       end  
       
