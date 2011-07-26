@@ -5,6 +5,7 @@ module ActiveMerchant #:nodoc:
     module Integrations #:nodoc:
       module Pensio
         class Notification < ActiveMerchant::Billing::Integrations::Notification
+          self.production_ips = [ '77.66.40.133' ]
 
           def complete?
             status == "succeeded"
