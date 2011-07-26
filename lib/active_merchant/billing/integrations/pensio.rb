@@ -1,5 +1,6 @@
 require File.dirname(__FILE__) + '/pensio/helper.rb'
 require File.dirname(__FILE__) + '/pensio/notification.rb'
+require File.dirname(__FILE__) + '/pensio/return.rb'
 
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:

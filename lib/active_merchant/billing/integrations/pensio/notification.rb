@@ -26,10 +26,10 @@ module ActiveMerchant #:nodoc:
 
           # Was this a test transaction?
           def test?
-            params[''] == 'test'
+            params['transaction_info'] == ['test']
           end
 
-          def error_message
+          def message
             params['error_message']
           end
 
@@ -46,7 +46,7 @@ module ActiveMerchant #:nodoc:
           end
 
           # Provide access to raw fields from Pensio
-          %w(transaction_info type payment_status masked_credit_card blacklist_token credit_card_token nature require_capture).each do |attr|
+          %w(transaction_info type payment_status masked_credit_card blacklist_token credit_card_token nature require_capture error_message).each do |attr|
             define_method(attr) do
               params[attr]
             end
@@ -93,27 +93,10 @@ module ActiveMerchant #:nodoc:
           #       ... log possible hacking attempt ...
           #     end
           def acknowledge      
-            payload = raw
-
-            uri = URI.parse(Pensio.notification_confirmation_url)
-
-            request = Net::HTTP::Post.new(uri.path)
-
-            request['Content-Length'] = "#{payload.size}"
-            request['User-Agent'] = "Active Merchant -- http://home.leetsoft.com/am"
-            request['Content-Type'] = "application/x-www-form-urlencoded" 
-
-            http = Net::HTTP.new(uri.host, uri.port)
-            http.verify_mode    = OpenSSL::SSL::VERIFY_NONE unless @ssl_strict
-            http.use_ssl        = true
-
-            response = http.request(request, payload)
-
-            # Replace with the appropriate codes
-            raise StandardError.new("Faulty Pensio result: #{response.body}") unless ["AUTHORISED", "DECLINED"].include?(response.body)
-            response.body == "AUTHORISED"
+            true
           end
- private
+
+          private
 
           # Take the posted data and move the relevant data into a hash
           def parse(post)

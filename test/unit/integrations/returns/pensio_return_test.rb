@@ -4,30 +4,21 @@ class PensioNotificationTest < Test::Unit::TestCase
   include ActiveMerchant::Billing::Integrations
 
   def setup
-    @pensio = Pensio::Notification.new(http_raw_data)
+    @pensio = Pensio::Return.new(http_raw_data)
+    @pensio_error = Pensio::Return.new(http_raw_data_failed)
   end
 
-  def test_accessors
-    assert @pensio.complete?
-    assert_equal "succeeded", @pensio.status
-    assert_equal "342", @pensio.transaction_id
-    assert_equal "123", @pensio.item_id
-    assert_equal "24.23", @pensio.gross
-    assert_equal "DKK", @pensio.currency
-    assert_equal "klj234lkj23klj234ljk23lkj34", @pensio.credit_card_token
+  def test_return_accessors
+    assert @pensio.success?
+    assert_equal "123", @pensio.notification.item_id
+    assert_equal nil, @pensio.notification.message
   end
 
-  def test_compositions
-    assert_equal Money.new(2423, 'DKK'), @pensio.amount
-  end
-
-  # Replace with real successful acknowledgement code
-  def test_acknowledgement
-    assert @pensio.acknowledge
-  end
-
-  def test_respond_to_acknowledge
-    assert @pensio.respond_to?(:acknowledge)
+  def test_return_accessors_error
+    assert_equal false, @pensio_error.success?
+    assert_equal "123", @pensio_error.notification.item_id
+    assert_equal "This is an error msg", @pensio_error.notification.message
+    assert_equal "This is an error msg", @pensio_error.params['error_message']
   end
 
   private

@@ -60,8 +60,8 @@ module ActiveMerchant #:nodoc:
       def initialize(options = {})
         #requires!(options, :login, :password)
         @options = options
-        ECOMMERCE_TEST_URL = 'http://testgateway.pensio.com/eCommerce/API/form/'
-        ECOMMERCE_LIVE_URL = "http://#{options[:subdomain]}.pensio.com/eCommerce/API/form/"
+        #ECOMMERCE_TEST_URL = 'http://testgateway.pensio.com/eCommerce/API/form/'
+        #ECOMMERCE_LIVE_URL = "http://#{options[:subdomain]}.pensio.com/eCommerce/API/form/"
         super
       end  
       
@@ -105,10 +105,18 @@ module ActiveMerchant #:nodoc:
       
       def parse(body)
       end     
+
+      def ecommerce_url
+        if test?
+          'http://testgateway.pensio.com/eCommerce/API/form/'
+        else
+          "http://#{@options[:subdomain]}.pensio.com/eCommerce/API/form/"
+        end
+      end
       
       def commit(action, money, parameters)
         url = if action == 'auth'
-                test? ? ECOMMERCE_TEST_URL : ECOMMERCE_LIVE_URL
+                ecommerce_url
               else
                 test? ? MERCHANT_TEST_URL : MERCHANT_LIVE_URL
               end
