@@ -76,20 +76,19 @@ module ActiveMerchant #:nodoc:
       end
 
       #This is the MO/TO transaction
-      #def authorize(money, creditcard, options = {})
-      #  post = {}
-      #  add_amount(post, money, options)
-      #  add_invoice(post, options)
-      #  add_creditcard(post, creditcard)        
-      #  add_address(post, creditcard, options)        
-      #  add_customer_data(post, options)
-      #  
-      #  commit('reservationOfFixedAmountMTOT', money, post)
-      #end
+      def authorize(money, creditcard_or_cc_token, options = {})
+        post = {}
+        add_amount(post, money, options)
+        add_creditcard(post, creditcard)        
+        add_fraud_detection(post, options)
+        add_order_id(post, options)
+        add_terminal(post, options)
+        commit('reservationOfFixedAmountMTOT', post)
+      end
       
       #def purchase(money, creditcard, options = {})
       #  post = {}
-      #  add_invoice(post, options)
+      #  add_order_id(post, options)
       #  add_creditcard(post, creditcard)        
       #  add_address(post, creditcard, options)   
       #  add_customer_data(post, options)
@@ -185,9 +184,34 @@ module ActiveMerchant #:nodoc:
           end
         end
       end
+
+      def add_creditcard(post,cc)
+        if cc.is_a?(String)
+          post[:credit_card_token] = cc
+        elsif cc.is_a?(Hash)
+          post[:cardnum] = cc["cardnum"]
+          post[:emonth]  = cc["emonth"]
+          post[:eyear]   = cc["eyear"]
+        end
+      end
+
+      #only if its enabled for the terminal
+      def add_fraud_detection(post, options)
+        required_fraud = %w(billing_city billing_region billing_postal billing_country)
+        optional_fraud = %w(email customer_phone bank_name bank_phone billing_firstname billing_lastname billing_address)
+        if required_fraud.all?{|rf| options[rf.to_sym] || options[rf]}
+          (required_fraud + optional_fraud).each do |field|
+            post[field.to_sym] = (options[field.to_sym] || options[field]) if (options[field.to_sym] || options[field])
+          end
+        end
+      end
       
-      def add_invoice(post, options)
+      def add_order_id(post, options)
         post[:shop_orderid] ||= options[:order_id]
+      end
+
+      def add_terminal(post, options)
+        post[:terminal] ||= options[:terminal]
       end
       
       def commit(action, params)
