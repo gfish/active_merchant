@@ -64,10 +64,7 @@ module ActiveMerchant
             when :get
               raise ArgumentError, "GET requests do not support a request body" if body
               if http_basic_auth && http_basic_auth_password
-                http
-                req = Net::HTTP::Get.new(endpoint.path + '?' + endpoint.query)
-                req.basic_auth(http_basic_auth, http_basic_auth_password)
-                http.request(req)
+                http_basic_auth_request
               else
                 http.get(endpoint.request_uri, headers)
               end
@@ -104,6 +101,14 @@ module ActiveMerchant
       configure_ssl(http)
       configure_cert(http)
       http
+    end
+
+    def http_basic_auth_request
+      http
+      req = Net::HTTP::Get.new(endpoint.path + '?' + endpoint.query)
+      http.use_ssl = true
+      req.basic_auth(http_basic_auth, http_basic_auth_password)
+      http.request(req)
     end
     
     def configure_debugging(http)
