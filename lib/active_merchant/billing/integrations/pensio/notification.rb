@@ -93,7 +93,7 @@ module ActiveMerchant #:nodoc:
           #       ... log possible hacking attempt ...
           #     end
           def acknowledge      
-            true
+            valid_sender?
           end
 
           private

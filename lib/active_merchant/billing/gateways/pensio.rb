@@ -86,16 +86,6 @@ module ActiveMerchant #:nodoc:
         commit('reservationOfFixedAmountMTOT', post)
       end
       
-      #def purchase(money, creditcard, options = {})
-      #  post = {}
-      #  add_order_id(post, options)
-      #  add_creditcard(post, creditcard)        
-      #  add_address(post, creditcard, options)   
-      #  add_customer_data(post, options)
-      #       
-      #  commit('sale', money, post)
-      #end                       
-    
       #orderlines takes an array of hashes
       def capture(authorization, money = nil, order_lines = [])
         post = {}
@@ -107,14 +97,14 @@ module ActiveMerchant #:nodoc:
 
       #transaction_id required
       #amount optional
-      def refund(transaction_id, money = nil)
+      def refund(money, transaction_id)
         post = {}
         add_transaction(post,transaction_id)
         add_amount_without_currency(post,money)
         commit('refundCapturedReservation', post)
       end
 
-      def release_reservation(transaction_id)
+      def void(money, transaction_id)
         post = {}
         add_transaction(post,transaction_id)
         commit('releaseReservation', post)
@@ -271,31 +261,6 @@ module ActiveMerchant #:nodoc:
         self.ecommerce_url(subdomain) + "?" + params_str
       end
 
-      def self.fraud_detection_fields
-        %w(email username customer_phone bank_name bank_phone billing_firstname billing_lastname billing_address shipping_firstname shipping_lastname shipping_address shipping_city shipping_region shipping_postal shipping_country).inject({}) do |result, str|
-          result["customer_info[#{str}]"] = str
-          result
-        end
-      end
-
-      def generate_md5_string
-        if @secret.present? && self.fraud_detection_fields.any?{|ci_field,field| ci_field == options.keys.maps{|k| k.to_s}}
-          hash = self.fraud_detection_fields.inject({}) do |result, (ci_field,field)|
-            result[field] = options[ci_field.to_sym] if options[ci_field.to_sym]
-            result
-          end.merge("secret" => @secret)
-
-          hash.sort{|a,b| a[0] <=> b[0]}.map{|fv| "#{fv[0]}=#{fv[1]}"}.join(",")
-        end
-      end
-
-      def generate_md5_key
-        if generate_md5_string
-          Digest::MD5.hexdigest(generate_md5_string)
-        else
-          nil
-        end
-      end
 
       def self.ecommerce_url(subdomain)
         if test?
