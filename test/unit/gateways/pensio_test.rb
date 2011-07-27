@@ -2,19 +2,22 @@ require 'test_helper'
 
 class PensioTest < Test::Unit::TestCase
   def setup
-    @gateway = PensioGateway.new(
-                 :login => 'login',
-                 :password => 'password'
-               )
+    @gateway = PensioGateway.new({
+                 :terminal => 'Terminal Name',
+                 :subdomain => "thesubdomain"
+    })
 
-    @credit_card = credit_card
+    @credit_card = nil
     @amount = 100
     
     @options = { 
-      :order_id => '1',
-      :billing_address => address,
-      :description => 'Store Purchase'
+      :shop_orderid => '1',
+      :currency => 'DKK'
     }
+  end
+
+  def test_redirect_url
+    assert_equal "https://testgateway.pensio.com/eCommerce/API/form/?shop_orderid=1&terminal=Terminal+Name&currency=208&amount=1.00", @gateway.redirect_url(@amount, @options)
   end
   
   def test_successful_purchase
