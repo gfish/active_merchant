@@ -63,7 +63,14 @@ module ActiveMerchant
             result = case method
             when :get
               raise ArgumentError, "GET requests do not support a request body" if body
-              http.get(endpoint.request_uri, headers)
+              if http_basic_auth && http_basic_auth_password
+                http
+                req = Net::HTTP::Get.new(endpoint.path + '?' + endpoint.query)
+                req.basic_auth(http_basic_auth, http_basic_auth_password)
+                http.request(req)
+              else
+                http.get(endpoint.request_uri, headers)
+              end
             when :post
               debug body
               http.post(endpoint.request_uri, body, RUBY_184_POST_HEADERS.merge(headers))
