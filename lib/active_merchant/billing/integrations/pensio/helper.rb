@@ -6,8 +6,9 @@ module ActiveMerchant #:nodoc:
 
           def initialize(order, account, options = {})
             super
+            options.assert_valid_keys([:secret, :billing_address])
             @secret = options.delete(:secret)
-            add_field(mappings[:terminal], options[:terminal])
+            @options = options
           end
 
           #Required parameters
@@ -15,7 +16,7 @@ module ActiveMerchant #:nodoc:
           mapping :amount, 'amount'
           mapping :currency, 'currency'
         
-          mapping :item_id, 'shop_orderid'
+          mapping :order, 'shop_orderid'
 
           #Optional parameters
           mapping :payment_type, 'type'
@@ -65,9 +66,10 @@ module ActiveMerchant #:nodoc:
             :zip        => 'customer_info[shipping_postal]',
             :country    => 'customer_info[shipping_country]'
 
-          def form_field
+          def form_fields
             super
-            add_field(mappings[:credential2], generate_md5_key) if generate_md5_key
+            add_field(mappings[:currency], find_currency(@options[:currency]))
+            add_field(mappings[:credential2], generate_md5_key)
             @fields
           end
 
@@ -79,9 +81,9 @@ module ActiveMerchant #:nodoc:
             add_field(mappings[:amount], sprintf("%.2f", cents.to_f/100))
           end
 
-          def currency=(currency)
-            if currency
-              ActiveMerchant::Billing::PensioGateway.currency_codes.invert[currency.to_s].to_s
+          def find_currency(cur)
+            if cur
+              ActiveMerchant::Billing::PensioGateway.currency_codes[cur.to_sym].to_s
             else
               ActiveMerchant::Billing::PensioGateway.default_currency
             end
@@ -108,9 +110,9 @@ module ActiveMerchant #:nodoc:
           end
 
           def generate_md5_string
-            if @secret.present? && required_fraud_detection_fields.all?{|ci_field,field| ci_field == options.keys.maps{|k| k.to_s}}
+            if @secret.present? && required_fraud_detection_fields.all?{|ci_field,field| ci_field == @options.keys.maps{|k| k.to_s}}
               hash = required_fraud_detection_fields.merge(optional_fraud_detection_fields).inject({}) do |result, (ci_field,field)|
-                result[field] = options[ci_field.to_sym] if options[ci_field.to_sym]
+                result[field] = @options[ci_field.to_sym] if @options[ci_field.to_sym]
                 result
               end.merge("secret" => @secret)
 

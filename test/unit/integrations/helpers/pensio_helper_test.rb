@@ -4,14 +4,30 @@ class PensioHelperTest < Test::Unit::TestCase
   include ActiveMerchant::Billing::Integrations
   
   def setup
-    @helper = Pensio::Helper.new('order-500','cody@example.com', :amount => 500, :currency => 'USD')
+    @helper = Pensio::Helper.new(
+      1231,
+      'Terminal Name', 
+      :amount => 500, 
+      :currency => 'SEK',
+      :billing_address => {
+        :city => 'My City',
+        :region => 'Region2',
+        :zip    => '2342',
+        :country => 'Denmark'
+      },
+      :secret => 'secret'
+    )
   end
  
   def test_basic_helper_fields
-    assert_field '', 'cody@example.com'
+    assert_field 'terminal', 'Terminal Name'
+    assert_field 'amount', '5.00'
+    assert_field 'shop_orderid', '1231'
+  end
 
-    assert_field '', '5.00'
-    assert_field '', 'order-500'
+  def test_basic_helper_fields
+    assert_equal '752', @helper.form_fields['currency']
+    assert_equal Digest::MD5.hexdigest("billing_city=My City,billing_country=Denmark,billing_postal=2342,billing_region=Region2,secret=secret"), @helper.form_fields['customer_info[checksum]']
   end
   
   def test_customer_fields
