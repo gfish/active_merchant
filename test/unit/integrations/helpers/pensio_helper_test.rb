@@ -26,15 +26,20 @@ class PensioHelperTest < Test::Unit::TestCase
       :city => 'My City',
       :region => 'Region2',
       :zip    => '2342',
-      :country => 'Denmark'
+      :country => 'Denmark',
+      :first_name => 'John'
     }
+
+    @helper.payment_type = 'payment'
+
     assert_equal '752', @helper.form_fields['currency']
-    assert_equal "billing_city=My City,billing_country=Denmark,billing_postal=2342,billing_region=Region2,secret=secret", @helper.generate_md5_string
-    assert_equal Digest::MD5.hexdigest("billing_city=My City,billing_country=Denmark,billing_postal=2342,billing_region=Region2,secret=secret"), @helper.form_fields['customer_info[checksum]']
+    assert_equal "billing_city=My City,billing_country=Denmark,billing_firstname=John,billing_postal=2342,billing_region=Region2,secret=secret", @helper.generate_md5_string
+    assert_equal Digest::MD5.hexdigest("billing_city=My City,billing_country=Denmark,billing_firstname=John,billing_postal=2342,billing_region=Region2,secret=secret"), @helper.form_fields['customer_info[checksum]']
     assert_equal 'en', @helper.form_fields['language']
     assert_equal '1231', @helper.form_fields['shop_orderid']
     assert_equal '5.00', @helper.form_fields['amount']
     assert_equal 'Terminal Name', @helper.form_fields['terminal']
+    assert_equal 'payment', @helper.form_fields['type']
   end
   
   def test_customer_fields
