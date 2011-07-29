@@ -6,8 +6,7 @@ module ActiveMerchant #:nodoc:
 
           def initialize(order, account, options = {})
             super
-            options.assert_valid_keys([:secret, :billing_address])
-            @secret = options.delete(:secret)
+            @secret = options.delete(:credential2)
             @options = options
           end
 
@@ -35,7 +34,7 @@ module ActiveMerchant #:nodoc:
           mapping :secondary_transaction_info, 'secondary_transaction_info'
           mapping :secondary_type, 'secondary_type'
           mapping :cc_token, 'ccToken'
-          mapping :credential2, 'customer_info[checksum]'
+          mapping :credential3, 'customer_info[checksum]'
 
 
           #mandatory fraud detection parameters
@@ -46,12 +45,14 @@ module ActiveMerchant #:nodoc:
             :email      => 'customer_info[email]',
             :phone      => 'customer_info[customer_phone]',
             :bank_name  => 'customer_info[bank_name]',
-            :bank_phone => 'customer_info[bank_phone]'
+            :bank_phone => 'customer_info[bank_phone]',
+            :first_name  => 'customer_info[billing_firstname]',
+            :last_name => 'customer_info[billing_lastname]'
 
           mapping :billing_address, 
             :city       => 'customer_info[billing_city]',
             :region     => 'customer_info[billing_region]',
-            :address    => 'customer_info[billing_address]',
+            :address1   => 'customer_info[billing_address]',
             :first_name => 'customer_info[billing_firstname]',
             :last_name  => 'customer_info[billing_lastname]',
             :zip        => 'customer_info[billing_postal]',
@@ -67,9 +68,9 @@ module ActiveMerchant #:nodoc:
             :country    => 'customer_info[shipping_country]'
 
           def form_fields
-            super
+            
             add_field(mappings[:currency], find_currency(@options[:currency]))
-            add_field(mappings[:credential2], generate_md5_key)
+            add_field(mappings[:credential3], generate_md5_key)
             @fields
           end
 
@@ -110,9 +111,9 @@ module ActiveMerchant #:nodoc:
           end
 
           def generate_md5_string
-            if @secret.present? && required_fraud_detection_fields.all?{|ci_field,field| ci_field == @options.keys.maps{|k| k.to_s}}
+            if @secret.present? && required_fraud_detection_fields.all?{|ci_field,field| fields[ci_field]}
               hash = required_fraud_detection_fields.merge(optional_fraud_detection_fields).inject({}) do |result, (ci_field,field)|
-                result[field] = @options[ci_field.to_sym] if @options[ci_field.to_sym]
+                result[field] = fields[ci_field] if fields[ci_field]
                 result
               end.merge("secret" => @secret)
 
