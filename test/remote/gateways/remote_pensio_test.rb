@@ -6,19 +6,20 @@ class RemotePensioTest < Test::Unit::TestCase
   def setup
     @gateway = PensioGateway.new(fixtures(:pensio))
     
-    @amount = 100
     @credit_card = credit_card('4000100011112224')
     @declined_card = credit_card('4000300011112220')
     
     @options = { 
-      :order_id => '1',
-      :billing_address => address,
-      :description => 'Store Purchase'
+      @options[:login] = LOGIN,
+      @options[:password] = PASSWORD
     }
   end
   
-  def test_successful_purchase
-    assert response = @gateway.purchase(@amount, @credit_card, @options)
+  def test_successful_authorize
+    @amount = 100
+    @credit_card = credit_card('4000000000000000')
+    @declined_card = credit_card('4000000000000000')
+    assert response = @gateway.authorize(@amount, @credit_card, @options)
     assert_success response
     assert_equal 'REPLACE WITH SUCCESS MESSAGE', response.message
   end

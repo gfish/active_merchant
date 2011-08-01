@@ -441,3 +441,7 @@ world_pay:
 world_pay_gateway:
   login: LOGIN
   password: PASSWORD
+
+pensio:
+  login: LOGIN
+  password: PASSWORD

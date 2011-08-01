@@ -3,8 +3,8 @@ require 'digest/md5'
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class PensioGateway < Gateway
-      MERCHANT_TEST_URL = 'https://testgateway.pensio.com/merchant/'
-      MERCHANT_LIVE_URL = 'https://gateway.pensio.com/merchant/'
+      TEST_URL = 'https://testgateway.pensio.com/merchant/'
+      LIVE_URL = 'https://gateway.pensio.com/merchant/'
       
       # The countries the gateway supports merchants from as 2 digit ISO country codes
       self.default_currency = 'DKK'
@@ -79,7 +79,7 @@ module ActiveMerchant #:nodoc:
         add_fraud_detection(post, options)
         add_order_id(post, options)
         add_terminal(post, options)
-        commit('reservationOfFixedAmountMTOT', post)
+        commit('reservationOfFixedAmount', post)
       end
       
       #orderlines takes an array of hashes
