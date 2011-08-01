@@ -9,7 +9,8 @@ class PensioHelperTest < Test::Unit::TestCase
       'Terminal Name', 
       :amount => 500, 
       :currency => 'SEK',
-      :credential2 => 'secret'
+      :credential2 => 'secret',
+      :credential3 => 'terminalname'
     )
     @helper.language = 'en'
 
@@ -32,6 +33,7 @@ class PensioHelperTest < Test::Unit::TestCase
 
     @helper.payment_type = 'payment'
 
+
     assert_equal '752', @helper.form_fields['currency']
     assert_equal "billing_city=My City,billing_country=Denmark,billing_firstname=John,billing_postal=2342,billing_region=Region2,secret=secret", @helper.generate_md5_string
     assert_equal Digest::MD5.hexdigest("billing_city=My City,billing_country=Denmark,billing_firstname=John,billing_postal=2342,billing_region=Region2,secret=secret"), @helper.form_fields['customer_info[checksum]']
@@ -40,6 +42,7 @@ class PensioHelperTest < Test::Unit::TestCase
     assert_equal '5.00', @helper.form_fields['amount']
     assert_equal 'Terminal Name', @helper.form_fields['terminal']
     assert_equal 'payment', @helper.form_fields['type']
+    assert_equal 'https://terminalname.pensio.com/eCommerce/API/form/', @helper.service_url
   end
   
   def test_customer_fields

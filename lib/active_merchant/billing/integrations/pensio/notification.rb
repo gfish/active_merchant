@@ -18,10 +18,30 @@ module ActiveMerchant #:nodoc:
           def transaction_id
             params['transaction_id']
           end
+          
+          #info
+          def received_at
+            params['']
+          end
+
+          def payer_email
+            params['']
+          end
+         
+          def receiver_email
+            params['']
+          end 
+
+          # The MD5 Hash
+          def security_key
+            params['']
+          end
 
           # the money amount we received in X.2 decimal.
           def gross
-            params['amount']
+            if params['amount']
+              params['amount'].to_f
+            end
           end
 
           # Was this a test transaction?
@@ -93,7 +113,9 @@ module ActiveMerchant #:nodoc:
           #       ... log possible hacking attempt ...
           #     end
           def acknowledge      
-            valid_sender?
+            if @options[:ip]
+              valid_sender?(@options[:ip])
+            end
           end
 
           private

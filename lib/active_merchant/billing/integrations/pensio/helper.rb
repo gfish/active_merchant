@@ -7,6 +7,7 @@ module ActiveMerchant #:nodoc:
           def initialize(order, account, options = {})
             super
             @secret = options.delete(:credential2)
+            @subdomain = options.delete(:credential3)
             @options = options
           end
 
@@ -34,7 +35,7 @@ module ActiveMerchant #:nodoc:
           mapping :secondary_transaction_info, 'secondary_transaction_info'
           mapping :secondary_type, 'secondary_type'
           mapping :cc_token, 'ccToken'
-          mapping :credential3, 'customer_info[checksum]'
+          mapping :credential4, 'customer_info[checksum]'
 
 
           #mandatory fraud detection parameters
@@ -67,10 +68,17 @@ module ActiveMerchant #:nodoc:
             :zip        => 'customer_info[shipping_postal]',
             :country    => 'customer_info[shipping_country]'
 
+          def service_url
+            if test?
+              'https://testgateway.pensio.com/eCommerce/API/form/'
+            else
+              "https://#{@subdomain}.pensio.com/eCommerce/API/form/"
+            end
+          end
+
           def form_fields
-            
             add_field(mappings[:currency], find_currency(@options[:currency]))
-            add_field(mappings[:credential3], generate_md5_key)
+            add_field(mappings[:credential4], generate_md5_key)
             @fields
           end
 

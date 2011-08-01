@@ -10,6 +10,7 @@ module ActiveMerchant #:nodoc:
 
         def initialize(post, options = {})
           @options = options
+          
           empty!
           parse(post)
         end

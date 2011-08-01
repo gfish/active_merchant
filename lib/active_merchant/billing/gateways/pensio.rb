@@ -71,10 +71,6 @@ module ActiveMerchant #:nodoc:
       end  
       
 
-      def self.redirect_url(money, options = {})
-        build_redirect_url(money, options)
-      end
-
       #This is the MO/TO transaction
       def authorize(money, creditcard_or_cc_token, options = {})
         post = {}
@@ -235,41 +231,6 @@ module ActiveMerchant #:nodoc:
         str
       end
 
-      def build_redirect_url(money, options)
-        secret  = options.delete(:secret)
-        if subdomain
-          subdomain = options.delete(:subdomain)
-        elsif !test?
-          raise "No subdomain is set for Pensio"
-        end
-
-        unless options[:terminal]
-          raise "No Terminal is set for Pensio redirect URL"
-        end
-
-        if generate_md5_string
-          options["customer_info[checksum]"] = generate_md5_string
-        end
-
-        options[:amount] = amount(money)
-        options[:currency] = CURRENCY_CODES[(options[:currency] || currency(money)).to_sym]
-        options[:shop_orderid] ||= options.delete[:order_id]
-        params_str = options.collect do |key,value|
-          "#{key}=#{CGI.escape(value.to_s)}"
-        end.join("&")
-
-        self.ecommerce_url(subdomain) + "?" + params_str
-      end
-
-
-      def self.ecommerce_url(subdomain)
-        if test?
-          'https://testgateway.pensio.com/eCommerce/API/form/'
-        else
-          "https://#{subdomain}.pensio.com/eCommerce/API/form/"
-        end
-      end
-      
     end
   end
 end
