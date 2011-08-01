@@ -65,8 +65,8 @@ module ActiveMerchant #:nodoc:
       def initialize(options = {})
         requires!(options, :login, :password)
         @options = options
-        @options[:http_basic_auth] = @options.delete[:login]
-        @options[:http_basic_auth_password] = @options.delete[:login]
+        @options[:http_basic_auth] = @options.delete(:login)
+        @options[:http_basic_auth_password] = @options.delete(:password)
         super
       end  
       
@@ -75,7 +75,7 @@ module ActiveMerchant #:nodoc:
       def authorize(money, creditcard_or_cc_token, options = {})
         post = {}
         add_amount(post, money, options)
-        add_creditcard(post, creditcard)        
+        add_creditcard(post, creditcard_or_cc_token)        
         add_fraud_detection(post, options)
         add_order_id(post, options)
         add_terminal(post, options)
@@ -202,23 +202,34 @@ module ActiveMerchant #:nodoc:
       
       def commit(action, params)
         response = parse(ssl_post(post_data(action,params)))
+        Response.new(successful?(response), message_from(response), response
+                    )
       end
 
-      def parse(data)
+      def successful?(response)
+        true if response[:result] && response[:result] == "Success"
+      end
+
+      def message_from(response)
+        response[:error_message] if response[:error_message].present?
+      end
+
+      def parse(xml)
         response = {}
 
-        doc = REXML::Document.new(data)
+        doc = REXML::Document.new(xml)
 
-        doc.root.elements.each do |element|
-          response[element.name.to_sym] = element.text
+        doc.elements.each('//APIResponse//*') do |element|
+          response[element.name.downcase.to_sym] = element.text
         end
+        response[:dump] = xml
 
         response
       end
 
       def url(action)
         str = ""
-        str << test? ? TEST_URL : LIVE_URL
+        str << (test? ? TEST_URL : LIVE_URL)
         str << action + "/"
         str
       end
