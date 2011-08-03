@@ -9,11 +9,14 @@ class RemotePensioTest < Test::Unit::TestCase
     @credit_card = credit_card('4000100011112224')
     @declined_card = credit_card('4000300011112220')
     @money = Money.new(100,'SEK')
+    @options = {}
   end
   
   def test_successful_authorize
-    @credit_card = credit_card('4000000000000000')
-    @declined_card = credit_card('4000000000000000')
+    @credit_card = {:cardnum => '4000000000000000',
+                    :emonth => '04',
+                    :eyear  => '2012',
+                    :cvc    => '234'}
     assert response = @gateway.authorize(@money, @credit_card, @options)
     assert_success response
     assert_equal 'REPLACE WITH SUCCESS MESSAGE', response.message

@@ -38,6 +38,8 @@ module ActiveMerchant
     attr_accessor :retry_safe
     attr_accessor :pem
     attr_accessor :pem_password
+    attr_accessor :http_basic_auth
+    attr_accessor :http_basic_auth_password
     attr_accessor :wiredump_device
     attr_accessor :logger
     attr_accessor :tag

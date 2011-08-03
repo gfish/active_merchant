@@ -3,8 +3,8 @@ require 'digest/md5'
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class PensioGateway < Gateway
-      TEST_URL = 'https://testgateway.pensio.com/merchant/'
-      LIVE_URL = 'https://gateway.pensio.com/merchant/'
+      TEST_URL = 'https://testgateway.pensio.com/merchant/API/'
+      LIVE_URL = 'https://gateway.pensio.com/merchant/API/'
       
       # The countries the gateway supports merchants from as 2 digit ISO country codes
       self.default_currency = 'DKK'
@@ -78,7 +78,7 @@ module ActiveMerchant #:nodoc:
         add_creditcard(post, creditcard_or_cc_token)        
         add_fraud_detection(post, options)
         add_order_id(post, options)
-        commit('reservationOfFixedAmount', post)
+        commit('reservationOfFixedAmountMOTO', post)
       end
       
       #orderlines takes an array of hashes
@@ -182,9 +182,10 @@ module ActiveMerchant #:nodoc:
         if cc.is_a?(String)
           post[:credit_card_token] = cc
         elsif cc.is_a?(Hash)
-          post[:cardnum] = cc["cardnum"]
-          post[:emonth]  = cc["emonth"]
-          post[:eyear]   = cc["eyear"]
+          post[:cardnum] = (cc["cardnum"] || cc[:cardnum])
+          post[:emonth]  = (cc["emonth"] || cc[:emonth]) 
+          post[:eyear]   = (cc["eyear"] || cc[:eyear])
+          post[:cvc]   = (cc["cvc"] || cc[:cvc])
         end
       end
 
