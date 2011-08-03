@@ -5,22 +5,41 @@ class PensioTest < Test::Unit::TestCase
     @gateway = PensioGateway.new({
                  :login => 'login',
                  :password => 'password',
-                 :terminal => 'Terminal Name',
-                 :subdomain => "thesubdomain"
+                 :terminal => 'Pensio Test Terminal'
     })
 
     @credit_card = nil
-    @amount = 100
+    @amount = 1000
+    @money = Money.new(1000, "SEK")
     
     @options = { 
-      :shop_orderid => '1',
-      :currency => 'DKK'
+      :order_id => '1',
     }
   end
 
   def test_successful_capture
-    @gateway.expects(:ssl_post).returns(successful_capture_response)
+    @gateway.expects(:ssl_get).returns(successful_capture_response)
     
+    assert response = @gateway.authorize(@money, @credit_card, @options)
+    assert_success response
+    assert_instance_of Response, response
+    # Replace with authorization number from the successful response
+    #assert_equal '', response.authorization
+    #assert response.test?
+
+    assert_equal 'Success', response.params["body"]['result']
+    assert_equal 'Pensio Test Terminal', response.params["body"]["transactions"]["transaction"]['terminal']
+    assert_equal successful_capture_response, response.params['dump']
+  end
+
+  def test_successful_capture_with_currency
+    @gateway.expects(:ssl_get).returns(successful_capture_response)
+    
+    @options = {
+      :order_id => '1',
+      :currency => 'SEK',
+    }
+
     assert response = @gateway.authorize(@amount, @credit_card, @options)
     assert_success response
     assert_instance_of Response, response
@@ -28,11 +47,11 @@ class PensioTest < Test::Unit::TestCase
     #assert_equal '', response.authorization
     #assert response.test?
 
-    assert_equal 'Success', response.params['result']
+    assert_equal 'Success', response.params["body"]['result']
   end
 
   def test_unsuccessful_request
-    @gateway.expects(:ssl_post).returns(failed_authorize_response)
+    @gateway.expects(:ssl_get).returns(failed_authorize_response)
     
     assert response = @gateway.authorize(@amount, @credit_card, @options)
     assert_failure response

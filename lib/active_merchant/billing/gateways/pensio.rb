@@ -63,7 +63,7 @@ module ActiveMerchant #:nodoc:
       
       #API User username and password
       def initialize(options = {})
-        requires!(options, :login, :password)
+        requires!(options, :login, :password, :terminal)
         @options = options
         @options[:http_basic_auth] = @options.delete(:login)
         @options[:http_basic_auth_password] = @options.delete(:password)
@@ -78,12 +78,11 @@ module ActiveMerchant #:nodoc:
         add_creditcard(post, creditcard_or_cc_token)        
         add_fraud_detection(post, options)
         add_order_id(post, options)
-        add_terminal(post, options)
         commit('reservationOfFixedAmount', post)
       end
       
       #orderlines takes an array of hashes
-      def capture(authorization, money = nil, order_lines = [])
+      def capture(money,authorization, order_lines = [])
         post = {}
         add_transaction_id(transaction_id)
         add_amount_without_currency(money)
@@ -112,7 +111,7 @@ module ActiveMerchant #:nodoc:
 
       #transaction_id required
       #amount optional
-      def capture_recurring(transaction_id, money = nil)
+      def capture_recurring(money, transaction_id)
         post = {}
         add_transaction(post, transaction_id)
         add_amount_without_currency(post, money)
@@ -121,7 +120,7 @@ module ActiveMerchant #:nodoc:
 
       #transaction_id required
       #amount optional
-      def preauth_recurring(transaction_id, money = nil)
+      def preauth_recurring(money,transaction_id)
         post = {}
         add_transaction(post, transaction_id)
         add_amount_without_currency(post, money)
@@ -142,11 +141,19 @@ module ActiveMerchant #:nodoc:
         commit('fundingDownload', post)
       end
     
-      private                       
+      private
 
       def add_amount(post, money, options = {})
         post[:amount]   = amount(money)
         post[:currency] = CURRENCY_CODES[(options[:currency] || currency(money)).to_sym]
+      end
+
+      def currency(money)
+        if money.respond_to?(:currency)
+          money.currency.iso_code
+        else
+          self.default_currency
+        end
       end
 
       def add_amount_without_currency(post, money, options = {})
@@ -196,35 +203,56 @@ module ActiveMerchant #:nodoc:
         post[:shop_orderid] ||= options[:order_id]
       end
 
-      def add_terminal(post, options)
-        post[:terminal] ||= options[:terminal]
-      end
-      
       def commit(action, params)
-        response = parse(ssl_post(post_data(action,params)))
+        response = parse(ssl_get(post_data(action,params.merge(:terminal => @options[:terminal]))))
         Response.new(successful?(response), message_from(response), response
                     )
       end
 
       def successful?(response)
-        true if response[:result] && response[:result] == "Success"
+        true if response["body"] && response["body"]["result"] && response["body"]["result"] == "Success"
       end
 
       def message_from(response)
         response[:error_message] if response[:error_message].present?
       end
 
-      def parse(xml)
-        response = {}
+      def parse(body)
+        xml = REXML::Document.new(body)
 
-        doc = REXML::Document.new(xml)
+        response = parse_to_hash(xml.root)
 
-        doc.elements.each('//APIResponse//*') do |element|
-          response[element.name.downcase.to_sym] = element.text
-        end
-        response[:dump] = xml
-
+        response[:dump] = body
         response
+      end
+
+      def parse_to_hash(node)
+        parse_normalize(xml_to_hash_of_arrays(node))
+      end
+      
+      def xml_to_hash_of_arrays(node)
+        hash = {}
+        REXML::XPath.each node, '*' do |node|
+          if node.parent.has_attributes?
+            node.parent.attributes.each_attribute do |attr|
+              hash[attr.name.underscore.to_sym] = attr.value
+            end
+          end
+          (hash[node.name.underscore] ||= []) << if node.has_elements?
+            xml_to_hash_of_arrays(node)
+          else
+            (node.text || '').strip
+          end
+        end
+        return hash
+      end
+      
+      def parse_normalize(hash)
+        return unless hash.kind_of?(Hash)
+        hash.each do |key, value|
+          value.each { |val| parse_normalize(val) }
+          hash[key] = *value
+        end
       end
 
       def url(action)
