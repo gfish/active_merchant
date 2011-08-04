@@ -82,11 +82,11 @@ module ActiveMerchant #:nodoc:
       end
       
       #orderlines takes an array of hashes
-      def capture(money,authorization, order_lines = [])
+      def capture(money,transaction_id, order_lines = [])
         post = {}
-        add_transaction_id(transaction_id)
-        add_amount_without_currency(money)
-        add_order_lines(order_lines)
+        add_transaction(post,transaction_id)
+        add_amount_without_currency(post, money)
+        add_order_lines(post, order_lines)
         commit('captureReservation', post)
       end
 
@@ -160,14 +160,14 @@ module ActiveMerchant #:nodoc:
         post[:amount]   = amount(money) if money
       end
 
-      def add_transaction_id(post,transaction_id)
+      def add_transaction(post,transaction_id)
         post[:transaction_id] = transaction_id
       end
 
-      def add_order_lines(order_lines)
+      def add_order_lines(post, order_lines)
         unless order_lines.empty?
           i = 0
-          order_lines.inject({}) do |result,line|
+          post[:order_lines] = order_lines.inject({}) do |result,line|
             line.each do |key,value|
               result["orderLines[#{i.to_s}][#{key.to_s}]"] = value.to_s
             end
@@ -206,7 +206,9 @@ module ActiveMerchant #:nodoc:
 
       def commit(action, params)
         response = parse(ssl_get(post_data(action,params.merge(:terminal => @options[:terminal]))))
-        Response.new(successful?(response), message_from(response), response
+        Response.new(successful?(response), message_from(response), response, 
+                     :authorization => authorization_from(response),
+                     :message => response['header']['error_message']
                     )
       end
 
@@ -215,7 +217,22 @@ module ActiveMerchant #:nodoc:
       end
 
       def message_from(response)
-        response[:error_message] if response[:error_message].present?
+        if response["body"] && response["body"]["result"]
+          response["body"]["result"]
+        elsif response['header'] && response['header']['error_message']
+          response['header']['error_message']
+        end
+      end
+
+      def authorization_from(response)
+        if response['body'] && response['body']['transactions']
+          transactions = response['body']['transactions']
+          if transactions.is_a?(Array)
+            response['body']['transactions'][0]['transaction_id']
+          else
+            transactions['transaction']['transaction_id']
+          end
+        end
       end
 
       def parse(body)
