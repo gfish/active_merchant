@@ -2,11 +2,11 @@ require 'test_helper'
 
 class PensioTest < Test::Unit::TestCase
   def setup
-    @gateway = PensioGateway.new({
-                 :login => 'login',
-                 :password => 'password',
-                 :terminal => 'Pensio Test Terminal'
-    })
+    @gateway = PensioGateway.new(
+      :login =>    'login',
+      :password => 'password',
+      :terminal => 'Pensio Test Terminal'
+    )
 
     @credit_card = nil
     @amount = 1000

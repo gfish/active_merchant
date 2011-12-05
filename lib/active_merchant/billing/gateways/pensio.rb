@@ -183,9 +183,9 @@ module ActiveMerchant #:nodoc:
           post[:credit_card_token] = cc
         elsif cc.is_a?(Hash)
           post[:cardnum] = (cc["cardnum"] || cc[:cardnum])
-          post[:emonth]  = (cc["emonth"] || cc[:emonth]) 
-          post[:eyear]   = (cc["eyear"] || cc[:eyear])
-          post[:cvc]   = (cc["cvc"] || cc[:cvc])
+          post[:emonth]  = (cc["emonth"]  || cc[:emonth]) 
+          post[:eyear]   = (cc["eyear"]   || cc[:eyear])
+          post[:cvc]     = (cc["cvc"]     || cc[:cvc])
         end
       end
 
@@ -206,14 +206,17 @@ module ActiveMerchant #:nodoc:
 
       def commit(action, params)
         response = parse(ssl_get(post_data(action,params.merge(:terminal => @options[:terminal]))))
-        Response.new(successful?(response), message_from(response), response, 
-                     :authorization => authorization_from(response),
-                     :message => response['header']['error_message']
-                    )
+        Response.new(
+          successful?(response),
+          message_from(response),
+          response,
+          :authorization => authorization_from(response),
+          :message => response['header']['error_message']
+        )
       end
 
       def successful?(response)
-        true if response["body"] && response["body"]["result"] && response["body"]["result"] == "Success"
+        response["body"] && response["body"]["result"] && response["body"]["result"] == "Success"
       end
 
       def message_from(response)
@@ -238,39 +241,21 @@ module ActiveMerchant #:nodoc:
       def parse(body)
         xml = REXML::Document.new(body)
 
-        response = parse_to_hash(xml.root)
-
-        response[:dump] = body
-        response
+        response = parse_element({}, xml.root)
+        response["api_response"].merge(:dump => body)
       end
 
-      def parse_to_hash(node)
-        parse_normalize(xml_to_hash_of_arrays(node))
-      end
-      
-      def xml_to_hash_of_arrays(node)
-        hash = {}
-        REXML::XPath.each node, '*' do |node|
-          if node.parent.has_attributes?
-            node.parent.attributes.each_attribute do |attr|
-              hash[attr.name.underscore.to_sym] = attr.value
-            end
-          end
-          (hash[node.name.underscore] ||= []) << if node.has_elements?
-            xml_to_hash_of_arrays(node)
-          else
-            (node.text || '').strip
-          end
+      def parse_element(memo, node)
+        node.attributes.each { |k, v| memo[k.underscore] = v }
+
+        if node.has_elements?
+          memo[node.name.underscore] = child = {}
+          node.elements.each { |e| parse_element(child, e) }
+        else
+          memo[node.name.underscore] = node.text unless node.text.nil?
         end
-        return hash
-      end
-      
-      def parse_normalize(hash)
-        return unless hash.kind_of?(Hash)
-        hash.each do |key, value|
-          value.each { |val| parse_normalize(val) }
-          hash[key] = *value
-        end
+
+        memo
       end
 
       def url(action)
@@ -287,8 +272,6 @@ module ActiveMerchant #:nodoc:
         str << params.collect{|k,v| "#{k.to_s}=#{CGI.escape(v.to_s)}"}.join("&")
         str
       end
-
     end
   end
 end
-
