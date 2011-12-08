@@ -18,10 +18,11 @@ module ActiveMerchant #:nodoc:
       def initialize(options = {})
         requires!(options, :merchant_id, :public_key, :private_key)
         @options = options
+        @merchant_account_id = options[:merchant_account_id]
         Braintree::Configuration.merchant_id = options[:merchant_id]
         Braintree::Configuration.public_key = options[:public_key]
         Braintree::Configuration.private_key = options[:private_key]
-        Braintree::Configuration.environment = test? ? :sandbox : :production
+        Braintree::Configuration.environment = (options[:environment] || (test? ? :sandbox : :production)).to_sym
         Braintree::Configuration.logger.level = Logger::ERROR if Braintree::Configuration.logger
         Braintree::Configuration.custom_user_agent = "ActiveMerchant #{ActiveMerchant::VERSION}"
         super
@@ -175,7 +176,11 @@ module ActiveMerchant #:nodoc:
               :postal_match => result.transaction.avs_postal_code_response_code
             }
             response_options[:cvv_result] = result.transaction.cvv_response_code
-            message = "#{result.transaction.processor_response_code} #{result.transaction.processor_response_text}"
+            if result.transaction.status == "gateway_rejected"
+              message = "Transaction declined - gateway rejected"
+            else
+              message = "#{result.transaction.processor_response_code} #{result.transaction.processor_response_text}"
+            end
           else
             message = message_from_result(result)
           end
@@ -276,8 +281,8 @@ module ActiveMerchant #:nodoc:
             :submit_for_settlement => options[:submit_for_settlement]
           }
         }
-        if options.has_key?(:merchant_account_id)
-          parameters[:merchant_account_id] = options[:merchant_account_id]
+        if merchant_account_id = (options[:merchant_account_id] || @merchant_account_id)
+          parameters[:merchant_account_id] = merchant_account_id
         end
         if credit_card_or_vault_id.is_a?(String) || credit_card_or_vault_id.is_a?(Integer)
           parameters[:customer_id] = credit_card_or_vault_id
