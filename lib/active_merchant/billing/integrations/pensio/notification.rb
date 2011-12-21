@@ -112,7 +112,7 @@ module ActiveMerchant #:nodoc:
           #     else
           #       ... log possible hacking attempt ...
           #     end
-          def acknowledge      
+          def acknowledge
             if @options[:ip]
               valid_sender?(@options[:ip])
             end

@@ -5,17 +5,17 @@ module ActiveMerchant #:nodoc:
     class PensioGateway < Gateway
       TEST_URL = 'https://testgateway.pensio.com/merchant/API/'
       LIVE_URL = 'https://gateway.pensio.com/merchant/API/'
-      
+
       # The countries the gateway supports merchants from as 2 digit ISO country codes
       self.default_currency = 'DKK'
       self.supported_countries = ['DK','SE']
-      
+
       # The card types supported by the payment gateway
       self.supported_cardtypes = [:visa, :master, :american_express, :discover]
-      
+
       # The homepage URL of the gateway
       self.homepage_url = 'http:/www.pensio.com'
-      
+
       # The name of the gateway
       self.display_name = 'Pensio'
 
@@ -60,7 +60,7 @@ module ActiveMerchant #:nodoc:
         :XOF => '952', :XPF => '953', :YER => '886', :YUM => '891', :ZAR => '710',
         :ZMK => '894', :ZWD => '716'
       }
-      
+
       #API User username and password
       def initialize(options = {})
         requires!(options, :login, :password, :terminal)
@@ -68,19 +68,19 @@ module ActiveMerchant #:nodoc:
         @options[:http_basic_auth] = @options.delete(:login)
         @options[:http_basic_auth_password] = @options.delete(:password)
         super
-      end  
-      
+      end
+
 
       #This is the MO/TO transaction
       def authorize(money, creditcard_or_cc_token, options = {})
         post = {}
         add_amount(post, money, options)
-        add_creditcard(post, creditcard_or_cc_token)        
+        add_creditcard(post, creditcard_or_cc_token)
         add_fraud_detection(post, options)
         add_order_id(post, options)
         commit('reservationOfFixedAmountMOTO', post)
       end
-      
+
       #orderlines takes an array of hashes
       def capture(money,transaction_id, order_lines = [])
         post = {}

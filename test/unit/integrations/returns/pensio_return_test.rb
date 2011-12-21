@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class PensioNotificationTest < Test::Unit::TestCase
+class PensioReturnTest < Test::Unit::TestCase
   include ActiveMerchant::Billing::Integrations
 
   def setup

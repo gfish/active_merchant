@@ -2,7 +2,7 @@ require 'test_helper'
 
 class PensioHelperTest < Test::Unit::TestCase
   include ActiveMerchant::Billing::Integrations
-  
+
   def setup
     @helper = Pensio::Helper.new(
       1231,
@@ -42,9 +42,9 @@ class PensioHelperTest < Test::Unit::TestCase
     assert_equal '5.00', @helper.form_fields['amount']
     assert_equal 'Terminal Name', @helper.form_fields['terminal']
     assert_equal 'payment', @helper.form_fields['type']
-    assert_equal 'https://terminalname.pensio.com/eCommerce/API/form/', @helper.service_url
+    assert_equal 'https://testgateway.pensio.com/eCommerce/API/form/', @helper.service_url
   end
-  
+
   def test_customer_fields
     @helper.customer :first_name => 'Cody', :last_name => 'Fauser', :email => 'cody@example.com'
     assert_equal 'Cody', @helper.form_fields['customer_info[billing_firstname]']
@@ -59,14 +59,14 @@ class PensioHelperTest < Test::Unit::TestCase
                             :region => 'Yorkshire',
                             :zip => 'LS2 7EE',
                             :country  => 'CA'
-   
+
     assert_equal '1 My Street', @helper.form_fields['customer_info[billing_address]']
     assert_equal 'Leeds', @helper.form_fields['customer_info[billing_city]']
     assert_equal 'Yorkshire', @helper.form_fields['customer_info[billing_region]']
     assert_equal 'LS2 7EE', @helper.form_fields['customer_info[billing_postal]']
     assert_equal 'CA', @helper.form_fields['customer_info[billing_country]']
   end
-  
+
   def test_unknown_address_mapping
     @helper.billing_address :farm => 'CA'
     assert_equal 5, @helper.fields.size
@@ -77,7 +77,7 @@ class PensioHelperTest < Test::Unit::TestCase
       @helper.company_address :address => '500 Dwemthy Fox Road'
     end
   end
-  
+
   def test_setting_invalid_address_field
     fields = @helper.fields.dup
     @helper.billing_address :street => 'My Street'

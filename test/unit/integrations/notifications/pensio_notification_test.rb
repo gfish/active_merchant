@@ -29,7 +29,6 @@ class PensioNotificationTest < Test::Unit::TestCase
   end
 
   def test_accessors
-
     @pensio_e = Pensio::Notification.new(http_raw_data_failed, :ip => '77.66.40.133')
     assert_equal false, @pensio_e.complete?
     assert_equal "failed", @pensio_e.status
@@ -54,7 +53,6 @@ class PensioNotificationTest < Test::Unit::TestCase
     @pensio = Pensio::Notification.new(http_raw_data, :ip => '234.234.234.234')
     assert_equal false, @pensio.acknowledge
     ActiveMerchant::Billing::Base.integration_mode = :test
-
   end
 
   def test_respond_to_acknowledge
