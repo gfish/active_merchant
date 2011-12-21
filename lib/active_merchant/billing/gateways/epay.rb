@@ -53,7 +53,7 @@ module ActiveMerchant #:nodoc:
       # login: merchant number
       # password: referrer url (for authorize authentication)
       def initialize(options = {})
-        requires!(options, :login, :password)
+        requires!(options, :login)
         @options = options
         super
       end
@@ -181,7 +181,7 @@ module ActiveMerchant #:nodoc:
 
       def do_authorize(params)
         headers = {}
-        headers['Referer'] = options[:password] if options[:password]
+        headers['Referer'] = options[:referrer] || 'activemerchant.org'
 
         response = raw_ssl_request(:post, 'https://' + API_HOST + '/auth/default.aspx', authorize_post_data(params), headers)
 
@@ -249,6 +249,7 @@ module ActiveMerchant #:nodoc:
                 xml.tag! 'merchantnumber', @options[:login]
                 xml.tag! 'transactionid', params[:transaction]
                 xml.tag! 'amount', params[:amount].to_s if soap_call != 'delete'
+                xml.tag! 'pwd', @options[:password] if @options[:password]
               end
             end
           end
@@ -261,7 +262,17 @@ module ActiveMerchant #:nodoc:
         params[:accepturl] = 'https://ssl.ditonlinebetalingssystem.dk/auth/default.aspx?accept=1'
         params[:declineurl] = 'https://ssl.ditonlinebetalingssystem.dk/auth/default.aspx?decline=1'
         params[:merchantnumber] = @options[:login]
+        params[:pwd] = @options[:password] if @options[:password]
 
+        if @options[:md5]
+          key_parts = [
+            params[:currency],
+            params[:amount],
+            params[:orderid],
+            @options[:md5]
+          ]
+          params[:md5key] = Digest::MD5.hexdigest(key_parts.join)
+        end
         params.collect { |key, value| "#{key}=#{CGI.escape(value.to_s)}" }.join("&")
       end
 

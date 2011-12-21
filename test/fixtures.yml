@@ -77,10 +77,12 @@ elavon:
   password: PASSWORD
 
 # login: merchant number
-# password: referrer url (for authorize authentication)
+# referrer: referrer url (for authorize authentication)
 epay:
-  login: X
-  password: Y
+  login: merchant_id
+  password: webservices password
+  md5: md5
+  referrer: 'http://example.com'
 
 # Working credentials, no need to replace
 eway:

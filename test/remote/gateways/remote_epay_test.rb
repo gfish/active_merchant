@@ -6,11 +6,11 @@ class RemoteEpayTest < Test::Unit::TestCase
 
     @gateway = EpayGateway.new(fixtures(:epay))
 
-    @credit_card = credit_card('3333333333333000')
+    @credit_card = credit_card('4444444444444000') # Dankort
     @credit_card_declined = credit_card('3333333333333102')
 
     @amount = 100
-    @options = { :order_id => '1' }
+    @options = { :order_id => generate_unique_id }
   end
 
   def test_successful_authorization
