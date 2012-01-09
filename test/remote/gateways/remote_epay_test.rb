@@ -102,4 +102,13 @@ class RemoteEpayTest < Test::Unit::TestCase
     assert_failure response_void
     assert response_void.test?
   end
+
+  def test_transaction_fee
+    assert response = @gateway.transaction_fee(@amount, 491761, :currency => :DKK)
+    assert_equal 'true', response.params['result']
+    assert_success response
+    assert_equal 'VISA_ELECTRON_FOREIGN', response.params['cardtype']
+    assert_equal '195', response.params['fee']
+    assert_equal 'Visa/Electron (udenlandsk)', response.params['cardtypetext']
+  end
 end
