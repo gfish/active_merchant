@@ -24,7 +24,7 @@ module ActiveMerchant #:nodoc:
           end
           
           def card_number
-            params['cardno']
+            params['tcardno']
           end
 
           def card_number_postfix
