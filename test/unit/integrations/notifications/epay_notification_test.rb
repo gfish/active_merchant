@@ -14,6 +14,9 @@ class EpayNotificationTest < Test::Unit::TestCase
     assert_equal "DKK", @epay.currency
     assert_equal "201112141300", @epay.received_at
     assert_equal "0", @epay.transfer_fee
+    assert_equal "4000", @epay.card_number_postfix
+    assert_equal "444444XXXXXX4000", @epay.card_number
+    assert_equal "2", @epay.card_type
   end
 
   def test_compositions
@@ -39,7 +42,7 @@ class EpayNotificationTest < Test::Unit::TestCase
   private
 
   def http_raw_data
-    "tid=8010276&orderid=263&amount=14925&cur=208&date=20111214&time=1300&&eKey=04e10ed26ded935596e18da80971a817&transfee=0"
+    "tid=8010276&orderid=263&amount=14925&cur=208&date=20111214&time=1300&&eKey=04e10ed26ded935596e18da80971a817&transfee=0&cardnopostfix=4000&cardno=444444XXXXXX4000&cardid=2"
   end  
   
   def http_raw_fail_data

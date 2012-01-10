@@ -22,6 +22,18 @@ module ActiveMerchant #:nodoc:
           def transaction_id
 				    params['tid']
           end
+          
+          def card_number
+            params['cardno']
+          end
+
+          def card_number_postfix
+            params['cardnopostfix'] 
+          end
+
+          def card_type
+            params['cardid']
+          end
 
           # When was this payment received by the client. 
           def received_at
