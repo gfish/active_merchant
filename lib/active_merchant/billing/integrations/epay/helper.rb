@@ -20,7 +20,7 @@ module ActiveMerchant #:nodoc:
           mapping :return_url, 'accepturl'
           mapping :decline_url, 'declineurl'
 
-          mapping :force_relay, 'forcerelay'
+          mapping :subscription, 'subscription'
           mapping :http_accept_url, 'httpaccepturl'
           mapping :instant_callback, 'instantcallback'
 

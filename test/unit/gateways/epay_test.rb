@@ -95,6 +95,10 @@ class EpayTest < Test::Unit::TestCase
 
     assert response = @gateway.purchase(100, '123', :order_id => '#1234')
   end
+
+  def test_authorize_subscribed
+    @gateway.expects(:soap_post).returns(REXML::Document.new(valid_refund_response))
+  end
   
   private
 

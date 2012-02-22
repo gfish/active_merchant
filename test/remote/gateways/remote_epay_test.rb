@@ -8,6 +8,7 @@ class RemoteEpayTest < Test::Unit::TestCase
 
     @credit_card = credit_card('4444444444444000') # Dankort
     @credit_card_declined = credit_card('3333333333333102')
+    @subscriber = "395839"
 
     @amount = 100
     @options = { :order_id => generate_unique_id }
@@ -110,5 +111,23 @@ class RemoteEpayTest < Test::Unit::TestCase
     assert_equal 'VISA_ELECTRON_FOREIGN', response.params['cardtype']
     assert_equal '195', response.params['fee']
     assert_equal 'Visa/Electron (udenlandsk)', response.params['cardtypetext']
+  end
+
+  def test_successful_subscriber_authorization
+    assert response = @gateway.subscriber_authorize(@amount, @subscriber, @options)
+    assert_equal 'true', response.params['result']
+    assert_not_nil response.params['tid']
+    assert_not_nil response.params['pbs']
+    assert_not_nil response.params['epay']
+    assert_success response
+    assert response.test?
+  end
+
+  def test_successful_subscriptions
+    assert response = @gateway.subscriptions(@subscriber, @options)
+    assert_equal '1', response.params['accept']
+    assert_not_nil response.params['subscriptionid']
+    assert_success response
+    assert response.test?
   end
 end

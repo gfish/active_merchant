@@ -2,7 +2,7 @@ module ActiveMerchant #:nodoc:
  module Billing #:nodoc:
     class EpayGateway < Gateway
       API_HOST = 'ssl.ditonlinebetalingssystem.dk'
-      SOAP_URL = 'https://' + API_HOST + '/remote/payment'
+      SOAP_URL = 'https://' + API_HOST + '/remote/'
 
       self.default_currency = 'DKK'
       self.money_format = :cents
@@ -120,6 +120,36 @@ module ActiveMerchant #:nodoc:
         commit(:get_card_info, post)
       end
 
+      def subscriber_authorize(money, subscriber, options = {})
+        post = {}
+
+        add_amount(post, money, options)
+        add_subscriber(post, subscriber)
+        add_invoice(post, options)
+        add_instant_capture(post, options[:instant_capture])
+
+        commit(:subscriber_authorize, post)
+      end
+
+      def unsubsribe(subscriber)
+        post = {}
+
+        add_subscriber(post, subscriber)
+
+        commit(:deletesubscription, post)
+      end
+
+      def subscriptions(subscriber, options = {})
+        post = {}
+
+        add_subscriber(post, subscriber) if subscriber.present?
+
+        commit(:get_subscriptions, post)
+      end
+
+      def pbs_error
+      end
+
       private
 
       def add_amount(post, money, options)
@@ -133,6 +163,10 @@ module ActiveMerchant #:nodoc:
 
       def add_reference(post, identification)
         post[:transaction] = identification
+      end
+
+      def add_subscriber(post, subscriber)
+        post[:subscription_id] = subscriber
       end
 
       def add_invoice(post, options)
@@ -186,10 +220,10 @@ module ActiveMerchant #:nodoc:
         return response
       end
 
-      def soap_post(method, params)
-        data = xml_builder(params, method)
-        headers = make_headers(data, method)
-        REXML::Document.new(ssl_post('https://' + API_HOST + '/remote/payment.asmx', data, headers))
+      def soap_post(service = "payment", method, params)
+        data = xml_builder(params, service, method)
+        headers = make_headers(data, service, method)
+        REXML::Document.new(ssl_post('https://' + API_HOST + "/remote/#{service}.asmx", data, headers))
       end
 
       def do_authorize(params)
@@ -253,27 +287,51 @@ module ActiveMerchant #:nodoc:
         }
       end
 
-      def make_headers(data, soap_call)
+      def do_subscriber_authorize(params)
+        response = soap_post('subscription', 'authorize', params)
+        {
+          'result' => response.elements['//authorizeResponse/authorizeResult'].text,
+          'tid' => response.elements['//authorizeResponse/transactionid'].text,
+          'pbs' => response.elements['//authorizeResponse/pbsresponse'].text,
+          'epay' => response.elements['//authorizeResponse/epayresponse'].text
+        }
+      end
+
+      def do_get_subscriptions(params)
+        response = soap_post('subscription', 'authorize', params)
+        {
+          'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
+          'subscription' => response.elements['//getsubscriptionsResponse/subscriptionAry'].text,
+          'subscriptionid' => response.elements['//getsubscriptionsResponse/subscriptionid'].text
+        }
+      end
+
+      def make_headers(data, service, soap_call)
         {
           'Content-Type' => 'text/xml; charset=utf-8',
           'Host' => API_HOST,
           'Content-Length' => data.size.to_s,
-          'SOAPAction' => SOAP_URL + '/' + soap_call
+          'SOAPAction' => SOAP_URL + service + '/' + soap_call
         }
       end
 
-      def xml_builder(params, soap_call)
+      def xml_builder(params, service, soap_call)
+        #service = "payment"
         xml = Builder::XmlMarkup.new(:indent => 2)
         xml.instruct!
-          xml.tag! 'soap:Envelope', { 'xmlns:xsi' => 'http://schemas.xmlsoap.org/soap/envelope/',
+          xml.tag! 'soap:Envelope', { 'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
                                       'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema',
                                       'xmlns:soap' => 'http://schemas.xmlsoap.org/soap/envelope/' } do
             xml.tag! 'soap:Body' do
-              xml.tag! soap_call, { 'xmlns' => SOAP_URL } do
+              xml.tag! soap_call, { 'xmlns' => SOAP_URL + service  } do
                 xml.tag! 'merchantnumber', @options[:login]
+                xml.tag! 'subscriptionid', params[:subscription_id] if params[:subscription_id]
+                xml.tag! 'currency', params[:currency] if params[:currency]
+                xml.tag! 'instantcapture', params[:instantcapture].to_s if params[:instantcapture]
                 xml.tag! 'transactionid', params[:transaction] if params[:transaction]
                 xml.tag! 'cardno_prefix', params[:cardno_prefix] if params[:cardno_prefix]
-                xml.tag! 'amount', params[:amount].to_s if soap_call != 'delete'
+                xml.tag! 'amount', params[:amount].to_s if params[:amount]
+                xml.tag! 'orderid', params[:orderid].to_s if params[:orderid]
                 xml.tag! 'pwd', @options[:password] if @options[:password]
               end
             end
