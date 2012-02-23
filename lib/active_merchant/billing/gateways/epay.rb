@@ -131,12 +131,12 @@ module ActiveMerchant #:nodoc:
         commit(:subscriber_authorize, post)
       end
 
-      def unsubsribe(subscriber)
+      def unsubscribe(subscriber)
         post = {}
 
         add_subscriber(post, subscriber)
 
-        commit(:deletesubscription, post)
+        commit(:delete_subscription, post)
       end
 
       def subscriptions(subscriber, options = {})
@@ -147,7 +147,13 @@ module ActiveMerchant #:nodoc:
         commit(:get_subscriptions, post)
       end
 
-      def pbs_error
+      def epay_error(errorcode, options = {})
+        post = {}
+
+        add_epay_response_code(post, errorcode)
+        add_language(post, options)
+
+        commit(:get_epay_error, post)
       end
 
       private
@@ -194,6 +200,17 @@ module ActiveMerchant #:nodoc:
 
       def add_instant_capture(post, option)
         post[:instantcapture] = option ? 1 : 0
+      end
+
+      def add_language(post, options)
+        # 1 = Danish
+        # 2 = English
+        # 3 = Swedish
+        post[:language] = options[:language] || 2
+      end
+
+      def add_epay_response_code(post, errorcode)
+        post[:epayresponsecode] = errorcode
       end
 
       def commit(action, params)
@@ -276,6 +293,15 @@ module ActiveMerchant #:nodoc:
         }
       end
 
+      def do_get_epay_error(params)
+        response = soap_post('getEpayError', params)
+        {
+          'result' => response.elements['//getEpayErrorResponse/getEpayErrorResult'].text,
+          'epayresponsestring' => response.elements['//getEpayErrorResponse/epayresponsestring'].text,
+          'epay' => response.elements['//getEpayErrorResponse/epayresponse'].text
+        }
+      end
+
       def do_get_card_info(params)
         response = soap_post('getcardinfo', params)
         {
@@ -297,12 +323,21 @@ module ActiveMerchant #:nodoc:
         }
       end
 
+      def do_delete_subscription(params)
+        response = soap_post('subscription', 'deletesubscription', params)
+        {
+          'result' => response.elements['//deletesubscriptionResponse/deletesubscriptionResult'].text,
+          'epay' => response.elements['//deletesubscriptionResponse/epayresponse'].text,
+        }
+      end
+
+      # TODO: implement hash -> xml and xml -> hash
       def do_get_subscriptions(params)
-        response = soap_post('subscription', 'authorize', params)
+        response = soap_post('subscription', 'getsubscriptions', params)
         {
           'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
-          'subscription' => response.elements['//getsubscriptionsResponse/subscriptionAry'].text,
-          'subscriptionid' => response.elements['//getsubscriptionsResponse/subscriptionid'].text
+          'subscriptions' => response.elements['//getsubscriptionsResponse/subscriptionAry'].text,
+          'epay' => response.elements['//getsubscriptionsResponse/epayresponse'].text
         }
       end
 
@@ -316,7 +351,6 @@ module ActiveMerchant #:nodoc:
       end
 
       def xml_builder(params, service, soap_call)
-        #service = "payment"
         xml = Builder::XmlMarkup.new(:indent => 2)
         xml.instruct!
           xml.tag! 'soap:Envelope', { 'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
@@ -330,6 +364,8 @@ module ActiveMerchant #:nodoc:
                 xml.tag! 'instantcapture', params[:instantcapture].to_s if params[:instantcapture]
                 xml.tag! 'transactionid', params[:transaction] if params[:transaction]
                 xml.tag! 'cardno_prefix', params[:cardno_prefix] if params[:cardno_prefix]
+                xml.tag! 'epayresponsecode', params[:epayresponsecode] if params[:epayresponsecode]
+                xml.tag! 'language', params[:language] if params[:language]
                 xml.tag! 'amount', params[:amount].to_s if params[:amount]
                 xml.tag! 'orderid', params[:orderid].to_s if params[:orderid]
                 xml.tag! 'pwd', @options[:password] if @options[:password]

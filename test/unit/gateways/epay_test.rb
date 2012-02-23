@@ -96,8 +96,43 @@ class EpayTest < Test::Unit::TestCase
     assert response = @gateway.purchase(100, '123', :order_id => '#1234')
   end
 
-  def test_authorize_subscribed
-    @gateway.expects(:soap_post).returns(REXML::Document.new(valid_refund_response))
+  def test_subscriber_authorization
+    @gateway.expects(:soap_post).returns(REXML::Document.new(valid_subscriber_authorization_response))
+
+    assert response = @gateway.subscriber_authorize(100, '123456', :order_id => '#1234')
+    assert_success response
+  end
+
+  def test_failed_subscriber_authorization
+    @gateway.expects(:soap_post).returns(REXML::Document.new(invalid_subscriber_authorization_response))
+
+    assert response = @gateway.subscriber_authorize(100, '123456', :order_id => '#1234')
+    assert_failure response
+    assert_equal 'ePay: -1009 PBS: -1', response.message
+  end
+
+  def test_failed_unsubscribe
+    @gateway.expects(:soap_post).returns(REXML::Document.new(valid_unsubscribe_response))
+
+    assert response = @gateway.unsubscribe(123456)
+    assert_success response
+    assert_equal 'ePay: -1009', response.message
+  end
+
+  def test_failed_unsubscribe
+    @gateway.expects(:soap_post).returns(REXML::Document.new(invalid_unsubscribe_response))
+
+    assert response = @gateway.unsubscribe(123456)
+    assert_failure response
+    assert_equal 'ePay: -1009', response.message
+  end
+
+  def test_epay_error
+    @gateway.expects(:soap_post).returns(REXML::Document.new(valid_epay_error_response))
+
+    assert response = @gateway.epay_error(-1009)
+    assert_success response
+    assert_equal 'Subscription was not found.', response.params['epayresponsestring']
   end
   
   private
@@ -130,7 +165,27 @@ class EpayTest < Test::Unit::TestCase
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><creditResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/payment"><creditResult>true</creditResult><pbsresponse>0</pbsresponse><epayresponse>-1</epayresponse></creditResponse></soap:Body></soap:Envelope>'
   end
 
+  def valid_subscriber_authorization_response
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><authorizeResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/subscription"><authorizeResult>true</authorizeResult><fraud>0</fraud><transactionid>8955361</transactionid><pbsresponse>0</pbsresponse><epayresponse>-1</epayresponse></authorizeResponse></soap:Body></soap:Envelope>'
+  end
+
+  def invalid_subscriber_authorization_response
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><authorizeResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/subscription"><authorizeResult>false</authorizeResult><fraud>0</fraud><transactionid>0</transactionid><pbsresponse>-1</pbsresponse><epayresponse>-1009</epayresponse></authorizeResponse></soap:Body></soap:Envelope>'
+  end
+
   def invalid_refund_response
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><creditResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/payment"><creditResult>false</creditResult><pbsresponse>-1</pbsresponse><epayresponse>-1008</epayresponse></creditResponse></soap:Body></soap:Envelope>'
+  end
+
+  def valid_epay_error_response
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><getEpayErrorResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/payment"><getEpayErrorResult>true</getEpayErrorResult><epayresponsestring>Subscription was not found.</epayresponsestring><epayresponse>-1</epayresponse></getEpayErrorResponse></soap:Body></soap:Envelope>'
+  end
+
+  def valid_unsubscribe_response
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><deletesubscriptionResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/subscription"><deletesubscriptionResult>true</deletesubscriptionResult><epayresponse>-1</epayresponse></deletesubscriptionResponse></soap:Body></soap:Envelope>'
+  end
+
+  def invalid_unsubscribe_response
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><deletesubscriptionResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/subscription"><deletesubscriptionResult>false</deletesubscriptionResult><epayresponse>-1009</epayresponse></deletesubscriptionResponse></soap:Body></soap:Envelope>'
   end
 end

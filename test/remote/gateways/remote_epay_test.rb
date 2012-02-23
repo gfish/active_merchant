@@ -113,21 +113,59 @@ class RemoteEpayTest < Test::Unit::TestCase
     assert_equal 'Visa/Electron (udenlandsk)', response.params['cardtypetext']
   end
 
+  def test_epay_error
+    assert response = @gateway.epay_error(-1009)
+    assert_equal 'true', response.params['result']
+    assert_equal 'Subscription was not found.', response.params['epayresponsestring']
+    assert_not_nil response.params['epay']
+    assert_success response
+    assert response.test?
+  end
+
+  # TODO: this test should first create a successfull subscription
   def test_successful_subscriber_authorization
     assert response = @gateway.subscriber_authorize(@amount, @subscriber, @options)
     assert_equal 'true', response.params['result']
     assert_not_nil response.params['tid']
     assert_not_nil response.params['pbs']
     assert_not_nil response.params['epay']
-    assert_success response
+    assert_success respons
+    assert response.test?
+  end
+
+  # TODO: create a test with a failing amount
+  def test_failed_subscriber_authorization
+    assert response = @gateway.subscriber_authorize(@amount, 1234567, @options)
+    assert_equal 'false', response.params['result']
+    assert_not_nil response.params['tid']
+    assert_not_nil response.params['pbs']
+    assert_not_nil response.params['epay']
+    assert_failure response
     assert response.test?
   end
 
   def test_successful_subscriptions
     assert response = @gateway.subscriptions(@subscriber, @options)
-    assert_equal '1', response.params['accept']
-    assert_not_nil response.params['subscriptionid']
+    assert_equal 'true', response.params['result']
+    assert_nil response.params['subscriptions'] # TODO: implement xml -> hash to get all details
+    assert_not_nil response.params['epay']
     assert_success response
+    assert response.test?
+  end
+
+  def test_successful_unsubscribe
+    assert response = @gateway.unsubscribe(@subscriber)
+    assert_equal 'true', response.params['result']
+    assert_not_nil response.params['epay']
+    assert_success response
+    assert response.test?
+  end
+
+  def test_failed_unsubscribe
+    assert response = @gateway.unsubscribe(12345)
+    assert_equal 'false', response.params['result']
+    assert_not_nil response.params['epay']
+    assert_failure response
     assert response.test?
   end
 end
