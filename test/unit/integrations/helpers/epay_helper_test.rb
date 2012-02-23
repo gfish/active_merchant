@@ -27,7 +27,7 @@ class EpayHelperTest < Test::Unit::TestCase
     @helper.http_accept_url = 0
     @helper.instant_callback = 1
     @helper.payment_type = 0
-    @helper.force_relay = 1
+    @helper.subscription = 1
     @helper.notify_url = "http://example.com/callback"
     @helper.return_url = "http://example.com/accepted"
     @helper.decline_url = "http://example.com/declined"
@@ -38,6 +38,7 @@ class EpayHelperTest < Test::Unit::TestCase
     assert_equal '1234567', @helper.form_fields['merchantnumber']
     assert_equal '0', @helper.form_fields['paymenttype']
     assert_equal '6845be2847be9f920cad101fb0367e1b', @helper.form_fields['md5key']
+    assert_equal '1', @helper.form_fields['subscription']
     assert_equal 'http://example.com/callback', @helper.form_fields['callbackurl']
     assert_equal 'http://example.com/accepted', @helper.form_fields['accepturl']
     assert_equal 'http://example.com/declined', @helper.form_fields['declineurl']

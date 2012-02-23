@@ -56,6 +56,10 @@ module ActiveMerchant #:nodoc:
             params['transfee']
           end
 
+          def subscription_id
+            params['subscriptionid']
+          end
+
           def currency
             if params['cur']
               ActiveMerchant::Billing::EpayGateway::CURRENCY_CODES.invert[params['cur'].to_s].to_s
