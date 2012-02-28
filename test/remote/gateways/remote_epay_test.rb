@@ -8,7 +8,7 @@ class RemoteEpayTest < Test::Unit::TestCase
 
     @credit_card = credit_card('4444444444444000') # Dankort
     @credit_card_declined = credit_card('3333333333333102')
-    @subscriber = "395839"
+    @subscriber = "396425"
 
     @amount = 100
     @options = { :order_id => generate_unique_id }
@@ -147,7 +147,10 @@ class RemoteEpayTest < Test::Unit::TestCase
   def test_successful_subscriptions
     assert response = @gateway.subscriptions(@subscriber, @options)
     assert_equal 'true', response.params['result']
-    assert_nil response.params['subscriptions'] # TODO: implement xml -> hash to get all details
+    assert_not_nil response.params['subscriptionid'] # TODO: implement xml -> hash to get all details
+    assert_not_nil response.params['cardtype']
+    assert_not_nil response.params['expmonth']
+    assert_not_nil response.params['expyear']
     assert_not_nil response.params['epay']
     assert_success response
     assert response.test?

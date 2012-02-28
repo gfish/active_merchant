@@ -336,7 +336,10 @@ module ActiveMerchant #:nodoc:
         response = soap_post('subscription', 'getsubscriptions', params)
         {
           'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
-          'subscriptions' => response.elements['//getsubscriptionsResponse/subscriptionAry'].text,
+          'subscriptionid' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/subscriptionid'].text,
+          'cardtype' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/cardtypeid'].text,
+          'expmonth' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/expmonth'].text,
+          'expyear' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/expyear'].text,
           'epay' => response.elements['//getsubscriptionsResponse/epayresponse'].text
         }
       end
