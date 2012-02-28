@@ -39,6 +39,7 @@ module ActiveMerchant #:nodoc:
         :create_customer_payment_profile => 'createCustomerPaymentProfile',
         :create_customer_shipping_address => 'createCustomerShippingAddress',
         :get_customer_profile => 'getCustomerProfile',
+        :get_customer_profile_ids => 'getCustomerProfileIds',
         :get_customer_payment_profile => 'getCustomerPaymentProfile',
         :get_customer_shipping_address => 'getCustomerShippingAddress',
         :delete_customer_profile => 'deleteCustomerProfile',
@@ -75,7 +76,8 @@ module ActiveMerchant #:nodoc:
       
       ECHECK_TYPES = {
         :ccd => 'CCD',
-        :ppd => 'PPD'
+        :ppd => 'PPD',
+        :web => 'WEB'
       }
       
       self.homepage_url = 'http://www.authorize.net/'
@@ -93,6 +95,7 @@ module ActiveMerchant #:nodoc:
       # * <tt>:login</tt> -- The Authorize.Net API Login ID (REQUIRED)
       # * <tt>:password</tt> -- The Authorize.Net Transaction Key. (REQUIRED)
       # * <tt>:test</tt> -- +true+ or +false+. If true, perform transactions against the test server. 
+      # * <tt>:delimiter</tt> -- The delimiter used in the direct response.  Default is ',' (comma).
       #   Otherwise, perform transactions against the production server.
       def initialize(options = {})
         requires!(options, :login, :password)
@@ -107,11 +110,28 @@ module ActiveMerchant #:nodoc:
       # It is *CRITICAL* that you save this ID. There is no way to retrieve this through the API. You will not 
       # be able to create another Customer Profile with the same information.
       #
-      # ==== Options
+      # 
       #
-      # TODO
+      # ==== Options
+      # 
+      # * <tt>:profile</tt> -- A hash containing at least one of the CONDITIONAL profile options below (REQUIRED)
+      #
+      # ==== Profile
+      #
+      # * <tt>:email</tt> -- Email address associated with the customer profile (CONDITIONAL)
+      # * <tt>:description</tt> -- Description of the customer or customer profile (CONDITIONAL)
+      # * <tt>:merchant_customer_id</tt> -- Merchant assigned ID for the customer (CONDITIONAL)
+      # * <tt>:payment_profile</tt> -- A hash containing the elements of the new payment profile (optional)
+      #
+      # ==== Payment Profile
+      #
+      # * <tt>:payment</tt> -- A hash containing information on payment. Either :credit_card or :bank_account (optional)
       def create_customer_profile(options)
-        # TODO Add requires
+        requires!(options, :profile)
+        requires!(options[:profile], :email) unless options[:profile][:merchant_customer_id] || options[:profile][:description]
+        requires!(options[:profile], :description) unless options[:profile][:email] || options[:profile][:merchant_customer_id]
+        requires!(options[:profile], :merchant_customer_id) unless options[:profile][:description] || options[:profile][:email]
+          
         request = build_request(:create_customer_profile, options)
         commit(:create_customer_profile, request)
       end
@@ -201,6 +221,11 @@ module ActiveMerchant #:nodoc:
 
         request = build_request(:get_customer_profile, options)
         commit(:get_customer_profile, request)
+      end
+
+      def get_customer_profile_ids(options = {})
+        request = build_request(:get_customer_profile_ids, options)
+        commit(:get_customer_profile_ids, request)
       end
 
       # Retrieve a customer payment profile for an existing customer profile.
@@ -466,6 +491,14 @@ module ActiveMerchant #:nodoc:
       def build_create_customer_profile_request(xml, options)
         add_profile(xml, options[:profile])
 
+        xml.tag!('validationMode', CIM_VALIDATION_MODES[options[:validation_mode]]) if options[:validation_mode]
+
+        if options.has_key?(:payment_profile)
+          xml.tag!('paymentProfile') do
+            add_payment_profile(xml, options[:payment_profile])
+          end
+        end
+        
         xml.target!
       end
 
@@ -510,6 +543,10 @@ module ActiveMerchant #:nodoc:
 
       def build_get_customer_profile_request(xml, options)
         xml.tag!('customerProfileId', options[:customer_profile_id])
+        xml.target!
+      end
+
+      def build_get_customer_profile_ids_request(xml, options)
         xml.target!
       end
 
@@ -624,7 +661,7 @@ module ActiveMerchant #:nodoc:
                 xml.tag!('customerPaymentProfileId', transaction[:customer_payment_profile_id])
                 xml.tag!('approvalCode', transaction[:approval_code]) if transaction[:type] == :capture_only
             end
-            add_order(xml, transaction[:order]) if transaction[:order]
+            add_order(xml, transaction[:order]) if transaction[:order].present?
           end
         end
       end
@@ -756,24 +793,23 @@ module ActiveMerchant #:nodoc:
         message = response_params['messages']['message']['text']
         test_mode = test? || message =~ /Test Mode/
         success = response_params['messages']['result_code'] == 'Ok'
+        response_params['direct_response'] = parse_direct_response(response_params['direct_response']) if response_params['direct_response']
+        transaction_id = response_params['direct_response']['transaction_id'] if response_params['direct_response']
 
-        response = Response.new(success, message, response_params,
+        Response.new(success, message, response_params,
           :test => test_mode,
-          :authorization => response_params['customer_profile_id'] || (response_params['profile'] ? response_params['profile']['customer_profile_id'] : nil)
+          :authorization => transaction_id || response_params['customer_profile_id'] || (response_params['profile'] ? response_params['profile']['customer_profile_id'] : nil)
         )
-        
-        response.params['direct_response'] = parse_direct_response(response) if response.params['direct_response']
-        response
       end
       
       def tag_unless_blank(xml, tag_name, data)
         xml.tag!(tag_name, data) unless data.blank? || data.nil?
       end
 
-      def parse_direct_response(response)
-        direct_response = {'raw' => response.params['direct_response']}
-        direct_response_fields = response.params['direct_response'].split(',')
-
+      def parse_direct_response(params)
+        delimiter = @options[:delimiter] || ','
+        direct_response = {'raw' => params}
+        direct_response_fields = params.split(delimiter)
         direct_response.merge(
           {
             'response_code' => direct_response_fields[0],
@@ -815,7 +851,14 @@ module ActiveMerchant #:nodoc:
             'purchase_order_number' => direct_response_fields[36],
             'md5_hash' => direct_response_fields[37],
             'card_code' => direct_response_fields[38],
-            'cardholder_authentication_verification_response' => direct_response_fields[39]
+            'cardholder_authentication_verification_response' => direct_response_fields[39],
+            # The following direct response fields are only available in version 3.1 of the
+            # transaction response.  Check your merchant account settings for details.
+            'account_number' => direct_response_fields[50] || '',
+            'card_type' => direct_response_fields[51] || '',
+            'split_tender_id' => direct_response_fields[52] || '',
+            'requested_amount' => direct_response_fields[53] || '',
+            'balance_on_card' => direct_response_fields[54] || '',
           }
         )
       end
