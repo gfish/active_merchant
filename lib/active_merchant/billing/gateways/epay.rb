@@ -334,14 +334,21 @@ module ActiveMerchant #:nodoc:
       # TODO: implement hash -> xml and xml -> hash
       def do_get_subscriptions(params)
         response = soap_post('subscription', 'getsubscriptions', params)
-        {
-          'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
-          'subscriptionid' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/subscriptionid'].text,
-          'cardtype' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/cardtypeid'].text,
-          'expmonth' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/expmonth'].text,
-          'expyear' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/expyear'].text,
-          'epay' => response.elements['//getsubscriptionsResponse/epayresponse'].text
-        }
+        unless response.elements['//getsubscriptionsResponse/getsubscriptionsResult/subscriptionAry'].nil?
+          {
+            'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
+            'subscriptionid' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/subscriptionid'].text,
+            'cardtype' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/cardtypeid'].text,
+            'expmonth' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/expmonth'].text,
+            'expyear' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/expyear'].text,
+            'epay' => response.elements['//getsubscriptionsResponse/epayresponse'].text
+          }
+        else
+          {
+            'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
+            'epay' => response.elements['//getsubscriptionsResponse/epayresponse'].text
+          }
+        end
       end
 
       def make_headers(data, service, soap_call)

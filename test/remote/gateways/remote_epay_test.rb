@@ -144,6 +144,7 @@ class RemoteEpayTest < Test::Unit::TestCase
     assert response.test?
   end
 
+  # TODO: this test should first create a successfull subscription
   def test_successful_subscriptions
     assert response = @gateway.subscriptions(@subscriber, @options)
     assert_equal 'true', response.params['result']
@@ -156,6 +157,15 @@ class RemoteEpayTest < Test::Unit::TestCase
     assert response.test?
   end
 
+  def test_failed_subscriptions
+    assert response = @gateway.subscriptions(12345, @options)
+    assert_equal 'true', response.params['result']
+    assert_nil response.params['subscriptionid']
+    assert_success response
+    assert response.test?
+  end
+
+  # TODO: create a subscription before this test
   def test_successful_unsubscribe
     assert response = @gateway.unsubscribe(@subscriber)
     assert_equal 'true', response.params['result']
