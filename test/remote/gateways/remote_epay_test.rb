@@ -8,7 +8,7 @@ class RemoteEpayTest < Test::Unit::TestCase
 
     @credit_card = credit_card('4444444444444000') # Dankort
     @credit_card_declined = credit_card('3333333333333102')
-    @subscriber = "396425"
+    @subscriber = "403060"
 
     @amount = 100
     @options = { :order_id => generate_unique_id }
@@ -129,7 +129,7 @@ class RemoteEpayTest < Test::Unit::TestCase
     assert_not_nil response.params['tid']
     assert_not_nil response.params['pbs']
     assert_not_nil response.params['epay']
-    assert_success respons
+    assert_success response
     assert response.test?
   end
 
