@@ -120,6 +120,14 @@ module ActiveMerchant #:nodoc:
         commit(:get_card_info, post)
       end
 
+      def get_transaction(identification)
+        post = {}
+
+        add_reference(post, identification)
+
+        commit(:get_transaction, post)
+      end
+
       def subscriber_authorize(money, subscriber, options = {})
         post = {}
 
@@ -310,6 +318,30 @@ module ActiveMerchant #:nodoc:
           'cardtype' => response.elements['//getcardinfoResponse/cardtype'].text,
           'cardtypetext' => response.elements['//getcardinfoResponse/cardtypetext'].text,
           'epay' => response.elements['//getcardinfoResponse/epayresponse'].text
+        }
+      end
+
+      def do_get_transaction(params)
+        response = soap_post('gettransaction', params)
+        {
+          'result'         => response.elements['//gettransactionResponse/gettransactionResult'].text,
+          'authamount'     => response.elements['//gettransactionResponse/transactionInformation/authamount'].text,
+          'currency'       => response.elements['//gettransactionResponse/transactionInformation/currency'].text,
+          'cardtypeid'     => response.elements['//gettransactionResponse/transactionInformation/cardtypeid'].text,
+          'capturedamount' => response.elements['//gettransactionResponse/transactionInformation/capturedamount'].text,
+          'creditedamount' => response.elements['//gettransactionResponse/transactionInformation/creditedamount'].text,
+          'orderid'        => response.elements['//gettransactionResponse/transactionInformation/orderid'].text,
+          'authdate'       => response.elements['//gettransactionResponse/transactionInformation/authdate'].text,
+          'captureddate'   => response.elements['//gettransactionResponse/transactionInformation/captureddate'].text,
+          'deleteddate'    => response.elements['//gettransactionResponse/transactionInformation/deleteddate'].text,
+          'crediteddate'   => response.elements['//gettransactionResponse/transactionInformation/crediteddate'].text,
+          'status'         => response.elements['//gettransactionResponse/transactionInformation/status'].text,
+          'transactionid'  => response.elements['//gettransactionResponse/transactionInformation/transactionid'].text,
+          'fee'            => response.elements['//gettransactionResponse/transactionInformation/fee'].text,
+          'tcardno'        => response.elements['//gettransactionResponse/transactionInformation/tcardno'].text,
+          'expmonth'       => response.elements['//gettransactionResponse/transactionInformation/expmonth'].text,
+          'expyear'        => response.elements['//gettransactionResponse/transactionInformation/expyear'].text,
+          'epay'           => response.elements['//gettransactionResponse/epayresponse'].text
         }
       end
 

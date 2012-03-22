@@ -113,6 +113,27 @@ class RemoteEpayTest < Test::Unit::TestCase
     assert_equal 'Visa/Electron (udenlandsk)', response.params['cardtypetext']
   end
 
+  # this test is obviously completely dependent on a valid transaction
+  def test_get_transaction
+    assert response = @gateway.get_transaction(9376727)
+    assert_equal 'true', response.params['result']
+    assert_success response
+    assert_equal '10100', response.params['authamount']
+    assert_equal '208', response.params['currency']
+    assert_equal '2', response.params['cardtypeid']
+    assert_equal '0', response.params['capturedamount']
+    assert_equal '0', response.params['creditedamount']
+    assert_equal '2578', response.params['orderid']
+    assert_equal '2012-03-21T13:58:00', response.params['authdate']
+    assert_equal '0001-01-01T00:00:00', response.params['captureddate']
+    assert_equal '0001-01-01T00:00:00', response.params['deleteddate']
+    assert_equal '0001-01-01T00:00:00', response.params['crediteddate']
+    assert_equal 'PAYMENT_NEW', response.params['status']
+    assert_equal '444444XXXXXX4000', response.params['tcardno']
+    assert_equal '1', response.params['expmonth']
+    assert_equal '13', response.params['expyear']
+  end
+
   def test_epay_error
     assert response = @gateway.epay_error(-1009)
     assert_equal 'true', response.params['result']

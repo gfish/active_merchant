@@ -96,6 +96,27 @@ class EpayTest < Test::Unit::TestCase
     assert response = @gateway.purchase(100, '123', :order_id => '#1234')
   end
 
+  def test_get_transaction
+    @gateway.expects(:soap_post).returns(REXML::Document.new(valid_get_transaction_response))
+    assert response = @gateway.get_transaction(9376727)
+    assert_equal 'true', response.params['result']
+    assert_success response
+    assert_equal '10100', response.params['authamount']
+    assert_equal '208', response.params['currency']
+    assert_equal '2', response.params['cardtypeid']
+    assert_equal '0', response.params['capturedamount']
+    assert_equal '0', response.params['creditedamount']
+    assert_equal '2578', response.params['orderid']
+    assert_equal '2012-03-21T13:58:00', response.params['authdate']
+    assert_equal '0001-01-01T00:00:00', response.params['captureddate']
+    assert_equal '0001-01-01T00:00:00', response.params['deleteddate']
+    assert_equal '0001-01-01T00:00:00', response.params['crediteddate']
+    assert_equal 'PAYMENT_NEW', response.params['status']
+    assert_equal '444444XXXXXX4000', response.params['tcardno']
+    assert_equal '1', response.params['expmonth']
+    assert_equal '13', response.params['expyear']
+  end
+
   def test_subscriber_authorization
     @gateway.expects(:soap_post).returns(REXML::Document.new(valid_subscriber_authorization_response))
 
@@ -165,16 +186,20 @@ class EpayTest < Test::Unit::TestCase
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><creditResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/payment"><creditResult>true</creditResult><pbsresponse>0</pbsresponse><epayresponse>-1</epayresponse></creditResponse></soap:Body></soap:Envelope>'
   end
 
+  def invalid_refund_response
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><creditResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/payment"><creditResult>false</creditResult><pbsresponse>-1</pbsresponse><epayresponse>-1008</epayresponse></creditResponse></soap:Body></soap:Envelope>'
+  end
+
+  def valid_get_transaction_response
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><gettransactionResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/payment"><gettransactionResult>true</gettransactionResult><transactionInformation><group /><authamount>10100</authamount><currency>208</currency><cardtypeid>2</cardtypeid><capturedamount>0</capturedamount><creditedamount>0</creditedamount><orderid>2578</orderid><description /><authdate>2012-03-21T13:58:00</authdate><captureddate>0001-01-01T00:00:00</captureddate><deleteddate>0001-01-01T00:00:00</deleteddate><crediteddate>0001-01-01T00:00:00</crediteddate><status>PAYMENT_NEW</status><history><TransactionHistoryInfo><transactionHistoryID>22928710</transactionHistoryID><logonID>0</logonID><username /><eventMsg>Payment authorized with amount 101,00 and currency code 208</eventMsg><created>2012-03-21T13:58:00</created></TransactionHistoryInfo></history><transactionid>9376727</transactionid><cardholder /><mode>MODE_EPAY</mode><msc>false</msc><fraudStatus>0</fraudStatus><payerCountryCode>  </payerCountryCode><issuedCountryCode>  </issuedCountryCode><fee>100</fee><splitpayment>false</splitpayment><acquirer>PBS</acquirer><tcardno>444444XXXXXX4000</tcardno><expmonth>1</expmonth><expyear>13</expyear></transactionInformation><epayresponse>-1</epayresponse></gettransactionResponse></soap:Body></soap:Envelope>'
+  end
+
   def valid_subscriber_authorization_response
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><authorizeResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/subscription"><authorizeResult>true</authorizeResult><fraud>0</fraud><transactionid>8955361</transactionid><pbsresponse>0</pbsresponse><epayresponse>-1</epayresponse></authorizeResponse></soap:Body></soap:Envelope>'
   end
 
   def invalid_subscriber_authorization_response
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><authorizeResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/subscription"><authorizeResult>false</authorizeResult><fraud>0</fraud><transactionid>0</transactionid><pbsresponse>-1</pbsresponse><epayresponse>-1009</epayresponse></authorizeResponse></soap:Body></soap:Envelope>'
-  end
-
-  def invalid_refund_response
-    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><creditResponse xmlns="https://ssl.ditonlinebetalingssystem.dk/remote/payment"><creditResult>false</creditResult><pbsresponse>-1</pbsresponse><epayresponse>-1008</epayresponse></creditResponse></soap:Body></soap:Envelope>'
   end
 
   def valid_epay_error_response
