@@ -41,6 +41,12 @@ module ActiveMerchant #:nodoc:
         commit 'DoExpressCheckoutPayment', build_sale_or_authorization_request('Sale', money, options)
       end
 
+      def reference_transaction(money, options = {})
+        requires!(options, :reference_id, :payment_type, :invoice_id, :description, :ip)
+
+        commit 'DoReferenceTransaction', build_reference_transaction_request('Sale', money, options)
+      end
+
       private
       def build_get_details_request(token)
         xml = Builder::XmlMarkup.new :indent => 2
@@ -106,6 +112,7 @@ module ActiveMerchant #:nodoc:
               xml.tag! 'n2:NoShipping', options[:no_shipping] ? '1' : '0'
               xml.tag! 'n2:AddressOverride', options[:address_override] ? '1' : '0'
               xml.tag! 'n2:LocaleCode', options[:locale] unless options[:locale].blank?
+              xml.tag! 'n2:BrandName', options[:brand_name] unless options[:brand_name].blank?
               # Customization of the payment page
               xml.tag! 'n2:PageStyle', options[:page_style] unless options[:page_style].blank?
               xml.tag! 'n2:cpp-header-image', options[:header_image] unless options[:header_image].blank?
@@ -114,7 +121,7 @@ module ActiveMerchant #:nodoc:
               xml.tag! 'n2:cpp-payflow-color', options[:background_color] unless options[:background_color].blank?
               if options[:allow_guest_checkout]
                 xml.tag! 'n2:SolutionType', 'Sole'
-                xml.tag! 'n2:LandingPage', 'Billing'
+                xml.tag! 'n2:LandingPage', options[:landing_page] || 'Billing'
               end
               xml.tag! 'n2:BuyerEmail', options[:email] unless options[:email].blank?
 
@@ -149,6 +156,7 @@ module ActiveMerchant #:nodoc:
                 add_items_xml(xml, options, currency_code) if options[:items]
 
                 xml.tag! 'n2:PaymentAction', action
+                xml.tag! 'n2:Custom', options[:custom] unless options[:custom].blank?
               end
 
               if options[:shipping_options]
@@ -170,6 +178,32 @@ module ActiveMerchant #:nodoc:
         xml.target!
       end
       
+      def build_reference_transaction_request(action, money, options)
+        currency_code = options[:currency] || currency(money)
+
+        xml = Builder::XmlMarkup.new :indent => 2
+        xml.tag! 'DoReferenceTransactionReq', 'xmlns' => PAYPAL_NAMESPACE do
+          xml.tag! 'DoReferenceTransactionRequest', 'xmlns:n2' => EBAY_NAMESPACE do
+            xml.tag! 'n2:Version', API_VERSION
+            xml.tag! 'n2:DoReferenceTransactionRequestDetails' do
+              xml.tag! 'n2:ReferenceID', options[:reference_id]
+              xml.tag! 'n2:PaymentAction', action
+              xml.tag! 'n2:PaymentType', options[:payment_type] || 'Any'
+              xml.tag! 'n2:PaymentDetails' do
+                xml.tag! 'n2:OrderTotal', amount(money).to_f.zero? ? localized_amount(100, currency_code) : localized_amount(money, currency_code), 'currencyID' => currency_code
+                xml.tag! 'n2:OrderDescription', options[:description]
+                xml.tag! 'n2:InvoiceID', options[:invoice_id]
+                xml.tag! 'n2:ButtonSource', 'ActiveMerchant'
+                xml.tag! 'n2:NotifyURL', ''
+              end
+              xml.tag! 'n2:IPAddress', options[:ip]
+            end
+          end
+        end
+
+        xml.target!
+      end
+
       def build_response(success, message, response, options = {})
         PaypalExpressResponse.new(success, message, response, options)
       end
@@ -187,6 +221,7 @@ module ActiveMerchant #:nodoc:
             end
             xml.tag! 'n2:Description', item[:description]
             xml.tag! 'n2:ItemURL', item[:url]
+            xml.tag! 'n2:ItemCategory', item[:category] if item[:category]
           end
         end
       end
