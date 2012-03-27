@@ -147,7 +147,7 @@ module ActiveMerchant #:nodoc:
         commit(:delete_subscription, post)
       end
 
-      def subscriptions(subscriber, options = {})
+      def subscriptions(subscriber = nil, options = {})
         post = {}
 
         add_subscriber(post, subscriber) if subscriber.present?
@@ -372,13 +372,28 @@ module ActiveMerchant #:nodoc:
             'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
             'epay' => response.elements['//getsubscriptionsResponse/epayresponse'].text
           }
-        else
+        elsif !params[:subscription_id].nil?
           {
             'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
             'subscriptionid' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/subscriptionid'].text,
             'cardtype' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/cardtypeid'].text,
             'expmonth' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/expmonth'].text,
             'expyear' => response.elements['//getsubscriptionsResponse/subscriptionAry/SubscriptionInformationType/expyear'].text,
+            'epay' => response.elements['//getsubscriptionsResponse/epayresponse'].text
+          }
+        else
+          subscriptions = []
+          response.elements['//getsubscriptionsResponse/subscriptionAry'].each do |subscription|
+            subscriptions << {
+            'subscriptionid' => subscription.elements['//SubscriptionInformationType/subscriptionid'].text,
+            'cardtype' => subscription.elements['//SubscriptionInformationType/cardtypeid'].text,
+            'expmonth' => subscription.elements['//SubscriptionInformationType/expmonth'].text,
+            'expyear' => subscription.elements['//SubscriptionInformationType/expyear'].text,
+            }
+          end
+          {
+            'result' => response.elements['//getsubscriptionsResponse/getsubscriptionsResult'].text,
+            'subscriptions' => subscriptions,
             'epay' => response.elements['//getsubscriptionsResponse/epayresponse'].text
           }
         end
