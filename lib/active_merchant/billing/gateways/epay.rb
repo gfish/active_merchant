@@ -128,6 +128,18 @@ module ActiveMerchant #:nodoc:
         commit(:get_transaction, post)
       end
 
+      def get_transaction_list(status, options = {})
+        post = {}
+
+        post[:status] = status if status.present?
+        post[:searchdatestart] = options[:search_date_start] if options[:search_date_start]
+        post[:searchdateend] = options[:search_date_end] if options[:search_date_end]
+        post[:searchgroup] = options[:search_group] if options[:search_group]
+        post[:searchorderid] = options[:search_order_id] if options[:search_order_id]
+
+        commit(:get_transaction_list, post)
+      end
+
       def subscriber_authorize(money, subscriber, options = {})
         post = {}
 
@@ -345,6 +357,41 @@ module ActiveMerchant #:nodoc:
         }
       end
 
+      def do_get_transaction_list(params)
+        response = soap_post('gettransactionlist', params)
+
+        transactions = []
+
+        unless response.elements['//gettransactionlistResponse/transactionInformationAry'].nil?
+          response.elements['//gettransactionlistResponse/transactionInformationAry'].each do |transaction|
+            transactions <<
+              {
+                'authamount'     => transaction.elements['//TransactionInformationType/authamount'].text,
+                'currency'       => transaction.elements['//TransactionInformationType/currency'].text,
+                'cardtypeid'     => transaction.elements['//TransactionInformationType/cardtypeid'].text,
+                'capturedamount' => transaction.elements['//TransactionInformationType/capturedamount'].text,
+                'creditedamount' => transaction.elements['//TransactionInformationType/creditedamount'].text,
+                'orderid'        => transaction.elements['//TransactionInformationType/orderid'].text,
+                'authdate'       => transaction.elements['//TransactionInformationType/authdate'].text,
+                'captureddate'   => transaction.elements['//TransactionInformationType/captureddate'].text,
+                'deleteddate'    => transaction.elements['//TransactionInformationType/deleteddate'].text,
+                'crediteddate'   => transaction.elements['//TransactionInformationType/crediteddate'].text,
+                'status'         => transaction.elements['//TransactionInformationType/status'].text,
+                'transactionid'  => transaction.elements['//TransactionInformationType/transactionid'].text,
+                'fee'            => transaction.elements['//TransactionInformationType/fee'].text,
+                'tcardno'        => transaction.elements['//TransactionInformationType/tcardno'].text,
+                'expmonth'       => transaction.elements['//TransactionInformationType/expmonth'].text,
+                'expyear'        => transaction.elements['//TransactionInformationType/expyear'].text,
+              }
+          end
+        end
+        {
+           'result'         => response.elements['//gettransactionlistResponse/gettransactionlistResult'].text,
+           'transactions'   => transactions,
+           'epay'           => response.elements['//gettransactionlistResponse/epayresponse'].text
+        }
+      end
+
       def do_subscriber_authorize(params)
         response = soap_post('subscription', 'authorize', params)
         {
@@ -411,6 +458,11 @@ module ActiveMerchant #:nodoc:
                 xml.tag! 'language', params[:language] if params[:language]
                 xml.tag! 'amount', params[:amount].to_s if params[:amount]
                 xml.tag! 'orderid', params[:orderid].to_s if params[:orderid]
+                xml.tag! 'status', params[:status] if params[:status].present?
+                xml.tag! 'searchdatestart', params[:searchdatestart] if params[:searchdatestart].present?
+                xml.tag! 'searchdateend', params[:searchdateend] if params[:searchdateend].present?
+                xml.tag! 'searchgroup', params[:searchgroup] if options[:searchgroup]
+                xml.tag! 'searchorderid', params[:searchorderid] if options[:searchorderid]
                 xml.tag! 'pwd', @options[:password] if @options[:password]
               end
             end

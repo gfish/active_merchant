@@ -134,6 +134,29 @@ class RemoteEpayTest < Test::Unit::TestCase
     assert_equal '13', response.params['expyear']
   end
 
+  def test_get_transaction_list_new
+    options = {}
+    options[:search_date_start] = "2012-04-01T00:00:00"
+    options[:search_date_end] = "2012-04-30T00:00:00"
+    assert response = @gateway.get_transaction_list("PAYMENT_NEW", options)
+    assert_success response
+    assert_equal 'true', response.params['result']
+    assert_not_nil response.params['transactions']
+    assert_not_nil response.params['epay']
+    puts response.inspect
+  end
+
+  def test_get_transaction_list_captured
+    options = {}
+    options[:search_date_start] = "2012-04-01T00:00:00"
+    options[:search_date_end] = "2012-04-15T00:00:00"
+    assert response = @gateway.get_transaction_list("PAYMENT_CAPTURED", options)
+    assert_success response
+    assert_equal 'true', response.params['result']
+    assert_not_nil response.params['transactions']
+    assert_not_nil response.params['epay']
+  end
+
   def test_epay_error
     assert response = @gateway.epay_error(-1009)
     assert_equal 'true', response.params['result']
