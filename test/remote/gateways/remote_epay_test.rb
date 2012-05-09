@@ -137,7 +137,7 @@ class RemoteEpayTest < Test::Unit::TestCase
   def test_get_transaction_list_new
     options = {}
     options[:search_date_start] = "2012-04-01T00:00:00"
-    options[:search_date_end] = "2012-04-30T00:00:00"
+    options[:search_date_end] = "2012-04-05T00:00:00"
     assert response = @gateway.get_transaction_list("PAYMENT_NEW", options)
     assert_success response
     assert_equal 'true', response.params['result']
@@ -149,7 +149,7 @@ class RemoteEpayTest < Test::Unit::TestCase
   def test_get_transaction_list_captured
     options = {}
     options[:search_date_start] = "2012-04-01T00:00:00"
-    options[:search_date_end] = "2012-04-15T00:00:00"
+    options[:search_date_end] = "2012-04-05T00:00:00"
     assert response = @gateway.get_transaction_list("PAYMENT_CAPTURED", options)
     assert_success response
     assert_equal 'true', response.params['result']
