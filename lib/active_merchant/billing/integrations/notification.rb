@@ -40,6 +40,10 @@ module ActiveMerchant #:nodoc:
           @params  = Hash.new
           @raw     = ""      
         end
+
+        def acknowledge
+          raise NotImplementedError, "Must implement this method in the subclass"
+        end
         
         # Check if the request comes from an official IP
         def valid_sender?(ip)
