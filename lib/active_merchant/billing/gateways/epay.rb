@@ -63,6 +63,7 @@ module ActiveMerchant #:nodoc:
 
         add_amount(post, money, options)
         add_invoice(post, options)
+        add_group(post, options)
         add_creditcard_or_reference(post, credit_card_or_reference)
         add_instant_capture(post, false)
 
@@ -134,6 +135,7 @@ module ActiveMerchant #:nodoc:
         add_amount(post, money, options)
         add_subscriber(post, subscriber)
         add_invoice(post, options)
+        add_group(post, options)
         add_instant_capture(post, options[:instant_capture])
 
         commit(:subscriber_authorize, post)
@@ -185,6 +187,10 @@ module ActiveMerchant #:nodoc:
 
       def add_invoice(post, options)
         post[:orderid] = format_order_number(options[:order_id])
+      end
+
+      def add_group(post, options)
+        post[:group] = options[:group] if options[:group].present?
       end
 
       def add_creditcard(post, credit_card)
