@@ -16,12 +16,12 @@ module ActiveMerchant #:nodoc:
           mapping :order, 'orderid'
           mapping :payment_type, 'paymenttype'
           mapping :group, 'group'
+          mapping :subscription, 'subscription'
 
           mapping :notify_url, 'callbackurl'
           mapping :return_url, 'accepturl'
           mapping :decline_url, 'declineurl'
 
-          mapping :subscription, 'subscription'
           mapping :http_accept_url, 'httpaccepturl'
           mapping :instant_callback, 'instantcallback'
 
