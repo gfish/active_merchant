@@ -15,6 +15,7 @@ module ActiveMerchant #:nodoc:
           mapping :amount, 'amount'
           mapping :order, 'orderid'
           mapping :payment_type, 'paymenttype'
+          mapping :group, 'group'
 
           mapping :notify_url, 'callbackurl'
           mapping :return_url, 'accepturl'
