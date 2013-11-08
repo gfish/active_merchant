@@ -417,6 +417,7 @@ module ActiveMerchant #:nodoc:
                 xml.tag! 'language', params[:language] if params[:language]
                 xml.tag! 'amount', params[:amount].to_s if params[:amount]
                 xml.tag! 'orderid', params[:orderid].to_s if params[:orderid]
+                xml.tag! 'group', params[:group].to_s if params[:group]
                 xml.tag! 'pwd', @options[:password] if @options[:password]
               end
             end
@@ -430,6 +431,7 @@ module ActiveMerchant #:nodoc:
         params[:accepturl] = 'https://ssl.ditonlinebetalingssystem.dk/auth/default.aspx?accept=1'
         params[:declineurl] = 'https://ssl.ditonlinebetalingssystem.dk/auth/default.aspx?decline=1'
         params[:merchantnumber] = @options[:login]
+        params[:group] = params[:group].to_s if params[:group]
         params[:pwd] = @options[:password] if @options[:password]
 
         if @options[:md5]
