@@ -5,6 +5,10 @@ module ActiveMerchant #:nodoc:
         class Helper < ActiveMerchant::Billing::Integrations::Helper
 
           def initialize(order, account, options = {})
+            @use_payment_window = options.delete(:payment_window) || false
+
+            mappings[:credential4] = 'hash' if @use_payment_window
+
             super
             @md5secret = options.delete(:credential2)
             @referrer_url = options.delete(:credential3)
@@ -36,17 +40,25 @@ module ActiveMerchant #:nodoc:
           ]
 
           def service_url
-            "https://relay.ditonlinebetalingssystem.dk/relay/v2/relay.cgi/#{@referrer_url}"
+            if @use_payment_window
+              @referrer_url
+            else
+              "https://relay.ditonlinebetalingssystem.dk/relay/v2/relay.cgi/#{@referrer_url}"
+            end
           end
 
           def payment_form_processing_url
-            'https://ssl.ditonlinebetalingssystem.dk/auth/default.aspx'
+            if @use_payment_window
+              'https://ssl.ditonlinebetalingssystem.dk/integration/ewindow/Default.aspx'
+            else
+              'https://ssl.ditonlinebetalingssystem.dk/auth/default.aspx'
+            end
           end
 
           def form_fields
             add_field(mappings[:currency], find_currency(@options[:currency]))
-            add_field(mappings[:credential4], generate_md5_key) if @md5secret
             @fields
+            add_field(mappings[:credential4], generate_md5_key) if @md5secret
           end
 
           def find_currency(cur)
@@ -55,7 +67,11 @@ module ActiveMerchant #:nodoc:
           end
 
           def generate_md5_key
-            Digest::MD5.hexdigest(MD5_FIELDS.map {|key| @fields[key.to_s]} * "" + @md5secret)
+            if @use_payment_window
+              Digest::MD5.hexdigest(find_currency(@options[:currency]) + @fields.values * "" + @md5secret)
+            else
+	      Digest::MD5.hexdigest(MD5_FIELDS.map {|key| @fields[key.to_s]} * "" + @md5secret)
+            end
           end
         end
       end

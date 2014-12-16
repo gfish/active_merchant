@@ -16,19 +16,19 @@ module ActiveMerchant #:nodoc:
           end 
 
           def item_id
-				    params['orderid']
+            params['orderid']
           end
 
           def transaction_id
-				    params['tid']
+            params['txnid'] || params['tid']
           end
           
           def card_number
-            params['tcardno']
+            params['cardno'] || params['tcardno']
           end
 
           def card_number_postfix
-            params['cardnopostfix'] 
+            params['cardno'].to_s[-4..-1] || params['cardnopostfix']
           end
 
           def card_type
@@ -53,7 +53,7 @@ module ActiveMerchant #:nodoc:
           end
 
           def transfer_fee
-            params['transfee']
+            params['txnfee'] || params['transfee']
           end
 
           def subscription_id
@@ -97,11 +97,17 @@ module ActiveMerchant #:nodoc:
           end
 
           def valid_checksum?
-            @options[:md5] and params['eKey'] and params['eKey'] == generate_md5_key
+            return true if @options[:md5] && params['hash'] && params['hash'] == generate_md5_key_all_params
+            return true if @options[:md5] && params['eKey'] && params['eKey'] == generate_md5_key
+            return false
           end
 
           def generate_md5_key
             Digest::MD5.hexdigest(MD5_FIELDS.map {|key| params[key.to_s]} * "" + @options[:md5])
+          end
+
+          def generate_md5_key_all_params
+            Digest::MD5.hexdigest(params.except('hash').values * "" + @options[:md5])
           end
 
           def acknowledge
