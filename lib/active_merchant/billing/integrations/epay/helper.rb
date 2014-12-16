@@ -57,8 +57,8 @@ module ActiveMerchant #:nodoc:
 
           def form_fields
             add_field(mappings[:currency], find_currency(@options[:currency]))
-            @fields
             add_field(mappings[:credential4], generate_md5_key) if @md5secret
+            @fields
           end
 
           def find_currency(cur)
