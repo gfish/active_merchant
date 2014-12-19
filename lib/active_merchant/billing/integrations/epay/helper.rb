@@ -68,7 +68,7 @@ module ActiveMerchant #:nodoc:
 
           def generate_md5_key
             if @use_payment_window
-              Digest::MD5.hexdigest(find_currency(@options[:currency]) + @fields.values * "" + @md5secret)
+              Digest::MD5.hexdigest(@fields.values * "" + @md5secret)
             else
 	      Digest::MD5.hexdigest(MD5_FIELDS.map {|key| @fields[key.to_s]} * "" + @md5secret)
             end
