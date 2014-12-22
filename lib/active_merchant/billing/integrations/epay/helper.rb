@@ -38,6 +38,13 @@ module ActiveMerchant #:nodoc:
           MD5_FIELDS = [
             :currency, :amount, :orderid
           ]
+          MD5_FIELDS_WINDOW = [
+            :merchantnumber, :currency, :amount, :orderid, :windowid, :mobile, :paymentcollection, :lockpaymentcollection,
+            :paymenttype, :language, :encoding, :cssurl, :mobilecssurl, :instantcapture, :splitpayment, :accepturl,
+            :cancelurl, :callbackurl, :instantcallback, :ownreceipt, :ordertext, :group, :description, :subscription,
+            :subscriptionid, :subscriptionname, :mailreceipt, :googletracker, :backgroundcolor, :opacity, :declinetext,
+            :timeout, :invoice
+	  ]
 
           def service_url
             if @use_payment_window
@@ -68,7 +75,7 @@ module ActiveMerchant #:nodoc:
 
           def generate_md5_key
             if @use_payment_window
-              Digest::MD5.hexdigest(@fields.values * "" + @md5secret)
+              Digest::MD5.hexdigest(@fields.select {|key| MD5_FIELDS_WINDOW.map(&:to_s).include? key }.values * "" + @md5secret)
             else
 	      Digest::MD5.hexdigest(MD5_FIELDS.map {|key| @fields[key.to_s]} * "" + @md5secret)
             end
