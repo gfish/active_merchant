@@ -77,7 +77,7 @@ module ActiveMerchant #:nodoc:
             if @use_payment_window
               Digest::MD5.hexdigest(@fields.select {|key| MD5_FIELDS_WINDOW.map(&:to_s).include? key }.values * "" + @md5secret)
             else
-	      Digest::MD5.hexdigest(MD5_FIELDS.map {|key| @fields[key.to_s]} * "" + @md5secret)
+              Digest::MD5.hexdigest(MD5_FIELDS.map {|key| @fields[key.to_s]} * "" + @md5secret)
             end
           end
         end
