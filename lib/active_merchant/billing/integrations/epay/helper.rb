@@ -39,12 +39,12 @@ module ActiveMerchant #:nodoc:
             :currency, :amount, :orderid
           ]
           MD5_FIELDS_WINDOW = [
-            :merchantnumber, :currency, :amount, :orderid, :windowid, :mobile, :paymentcollection, :lockpaymentcollection,
-            :paymenttype, :language, :encoding, :cssurl, :mobilecssurl, :instantcapture, :splitpayment, :accepturl,
-            :cancelurl, :callbackurl, :instantcallback, :ownreceipt, :ordertext, :group, :description, :subscription,
-            :subscriptionid, :subscriptionname, :mailreceipt, :googletracker, :backgroundcolor, :opacity, :declinetext,
-            :timeout, :invoice
-	  ]
+            :merchantnumber, :currency, :amount, :orderid, :windowstate, :mobile, :windowid, :paymentcollection,
+            :lockpaymentcollection, :paymenttype, :language, :encoding, :cssurl, :mobilecssurl, :instantcapture,
+            :splitpayment, :instantcallback, :callbackurl, :accepturl, :cancelurl, :ownreceipt, :ordertext, :group,
+            :description, :subscription, :subscriptionid, :subscriptionname, :mailreceipt, :googletracker,
+            :backgroundcolor, :opacity, :declinetext, :iframeheight, :iframewidth, :timeout, :invoice
+          ]
 
           def service_url
             if @use_payment_window
