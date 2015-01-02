@@ -5,6 +5,10 @@ module ActiveMerchant #:nodoc:
         class Helper < ActiveMerchant::Billing::Integrations::Helper
 
           def initialize(order, account, options = {})
+            @use_payment_window = options.delete(:payment_window) || false
+
+            mappings[:credential4] = 'hash' if @use_payment_window
+
             super
             @md5secret = options.delete(:credential2)
             @referrer_url = options.delete(:credential3)
@@ -34,13 +38,28 @@ module ActiveMerchant #:nodoc:
           MD5_FIELDS = [
             :currency, :amount, :orderid
           ]
+          MD5_FIELDS_WINDOW = [
+            :merchantnumber, :currency, :amount, :orderid, :windowstate, :mobile, :windowid, :paymentcollection,
+            :lockpaymentcollection, :paymenttype, :language, :encoding, :cssurl, :mobilecssurl, :instantcapture,
+            :splitpayment, :instantcallback, :callbackurl, :accepturl, :cancelurl, :ownreceipt, :ordertext, :group,
+            :description, :subscription, :subscriptionid, :subscriptionname, :mailreceipt, :googletracker,
+            :backgroundcolor, :opacity, :declinetext, :iframeheight, :iframewidth, :timeout, :invoice
+          ]
 
           def service_url
-            "https://relay.ditonlinebetalingssystem.dk/relay/v2/relay.cgi/#{@referrer_url}"
+            if @use_payment_window
+              @referrer_url
+            else
+              "https://relay.ditonlinebetalingssystem.dk/relay/v2/relay.cgi/#{@referrer_url}"
+            end
           end
 
           def payment_form_processing_url
-            'https://ssl.ditonlinebetalingssystem.dk/auth/default.aspx'
+            if @use_payment_window
+              'https://ssl.ditonlinebetalingssystem.dk/integration/ewindow/Default.aspx'
+            else
+              'https://ssl.ditonlinebetalingssystem.dk/auth/default.aspx'
+            end
           end
 
           def form_fields
@@ -55,7 +74,11 @@ module ActiveMerchant #:nodoc:
           end
 
           def generate_md5_key
-            Digest::MD5.hexdigest(MD5_FIELDS.map {|key| @fields[key.to_s]} * "" + @md5secret)
+            if @use_payment_window
+              Digest::MD5.hexdigest(@fields.select {|key| MD5_FIELDS_WINDOW.map(&:to_s).include? key }.values * "" + @md5secret)
+            else
+              Digest::MD5.hexdigest(MD5_FIELDS.map {|key| @fields[key.to_s]} * "" + @md5secret)
+            end
           end
         end
       end

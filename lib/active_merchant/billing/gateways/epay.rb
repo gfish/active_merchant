@@ -1,7 +1,7 @@
 module ActiveMerchant #:nodoc:
  module Billing #:nodoc:
     class EpayGateway < Gateway
-      API_HOST = 'yourpaymentsystem.net'
+      API_HOST = 'ssl.ditonlinebetalingssystem.dk'
       SOAP_URL = 'https://' + API_HOST + '/remote/'
 
       self.default_currency = 'DKK'
