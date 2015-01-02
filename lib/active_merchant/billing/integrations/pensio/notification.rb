@@ -18,6 +18,18 @@ module ActiveMerchant #:nodoc:
           def transaction_id
             params['transaction_id']
           end
+
+          def card_number
+            params[:masked_credit_card]
+          end
+
+          def card_number_postfix
+            card_number.to_s[-4..-1]
+          end
+
+          def card_type
+            nil
+          end
           
           #info
           def received_at
